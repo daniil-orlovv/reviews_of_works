@@ -3,8 +3,6 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 
 from django.core.mail import send_mail
-from django.views import View
-from django.http import JsonResponse
 
 import shortuuid
 

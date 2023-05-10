@@ -8,7 +8,7 @@ from api.views import SignUpView, LogInView
 
 router = SimpleRouter()
 
-router.register('/api/v1/auth/signup/', SendCodeView, basename='send_code')
+router.register('/api/v1/auth/signup/', SignUpView, basename='send_code')
 router.register('/api/v1/auth/token/', LogInView, basename='send_code')
 
 urlpatterns = [
