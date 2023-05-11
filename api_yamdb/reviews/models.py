@@ -10,6 +10,23 @@ class User(AbstractUser):
     role = models.CharField(max_length=50, default='user')
 
 
+class AuthUser(models.Model):
+    user = models.ForeignKey(
+        User,
+        related_name='user_auth',
+        on_delete=models.SET_NULL
+    )
+    confirmation_code = models.CharField(
+        max_length=10,
+        blank=True,
+        null=True
+    )
+    token = models.TextField(
+        blank=True,
+        null=True
+    )
+
+
 class Category(models.Model):
     name = models.CharField(max_length=200, blank=False, null=False)
     slug = models.SlugField(max_length=50, blank=False, null=False)
@@ -39,8 +56,3 @@ class Comment(models.Model):
 
 class Review(models.Model):
     ...
-
-class AuthUser(models.Model):
-    user = models.ForeignKey(
-        User,
-    )
