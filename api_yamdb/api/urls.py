@@ -8,21 +8,9 @@ from api.views import SignUpView, LogInView
 
 router = SimpleRouter()
 
-router.register('/api/v1/auth/signup/', SignUpView, basename='send_code')
-router.register('/api/v1/auth/token/', LogInView, basename='send_code')
+router.register('/api/v1/auth/signup/', SignUpView, basename='signup')
+router.register('/api/v1/auth/token/', LogInView, basename='login')
 
 urlpatterns = [
-
-    # Используется для получения access token и refresh token
-    path(
-        'api/token/',
-        TokenObtainPairView.as_view(),
-        name='token_obtain_pair'
-    ),
-    # Используется для обновления access token
-    path(
-        'api/token/refresh/',
-        TokenRefreshView.as_view(),
-        name='token_refresh'
-    ),
+    
 ]
