@@ -16,14 +16,11 @@ class AuthUser(models.Model):
         related_name='user_auth',
         on_delete=models.SET_NULL
     )
-    confirmation_code = models.CharField(
-        max_length=10,
-        blank=True,
-        null=True
-    )
-    token = models.TextField(
-        blank=True,
-        null=True
+
+
+class Code(models.Model):
+    code = models.CharField(
+        max_length=6, blank=True, null=True
     )
 
 

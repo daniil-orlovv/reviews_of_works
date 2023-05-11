@@ -4,13 +4,13 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from api.views import SignUpView, LogInView
+from api.views import SendCodeView, SendTokenView
 
 router = SimpleRouter()
 
-router.register('/api/v1/auth/signup/', SignUpView, basename='signup')
-router.register('/api/v1/auth/token/', LogInView, basename='login')
+router.register('/api/v1/auth/signup/', SendCodeView, basename='signup')
+router.register('/api/v1/auth/token/', SendTokenView, basename='login')
 
 urlpatterns = [
-    
+
 ]
