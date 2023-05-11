@@ -1,2 +1,1 @@
-# api_yamdb
-api_yamdb
+Не забыть оформть README.md
