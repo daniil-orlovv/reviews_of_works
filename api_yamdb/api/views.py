@@ -48,4 +48,5 @@ class SendTokenView(TokenObtainPairView):
             Token.objects.update_or_create(user=user, defaults={'key': token})
             return Response({'token': token}, status=status.HTTP_200_OK)
         else:
-            return Response({'error': 'Invalid confirmation code'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid confirmation code'},
+                            status=status.HTTP_400_BAD_REQUEST)
