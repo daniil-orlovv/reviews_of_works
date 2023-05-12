@@ -26,11 +26,11 @@ class Title(models.Model):
     genre = models.ForeignKey(
         Genre,
         related_name='title_genre',
-        on_delete=models.SET_NULL)
+        on_delete=models.CASCADE)
     category = models.ForeignKey(
         Category,
         related_name='title_category',
-        on_delete=models.SET_NULL)
+        on_delete=models.CASCADE)
 
 
 class Comment(models.Model):
