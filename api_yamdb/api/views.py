@@ -1,8 +1,7 @@
-from rest_framework import viewsets, status, permissions
+from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
 from django.shortcuts import get_object_or_404
 
@@ -20,7 +19,8 @@ class SendCodeView(APIView):
         email = self.request.data.get('email')
         username = self.request.data.get('username')
         confirmation_code = shortuuid.uuid()[:6]
-        Code.objects.create(code=confirmation_code)
+        user = User.objects.create(username=username, email=email)
+        Code.objects.create(user=user, code=confirmation_code)
         send_mail(
             'Confirmation Code',
             f'Your confirmation code: {confirmation_code}',

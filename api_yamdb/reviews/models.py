@@ -19,9 +19,19 @@ class AuthUser(models.Model):
 
 
 class Code(models.Model):
-    code = models.CharField(
-        max_length=6, blank=True, null=True
+    code = models.CharField(max_length=6, blank=True, null=True)
+    user = models.ForeignKey(
+        User,
+        related_name='user_code',
+        on_delete=models.CASCADE,
+        null=True
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['code', 'user'],
+                                    name='code_user_unique')
+        ]
 
 
 class Category(models.Model):
