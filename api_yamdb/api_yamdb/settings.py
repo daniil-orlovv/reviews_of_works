@@ -120,3 +120,7 @@ SIMPLE_JWT = {
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+
+AUTH_USER_MODEL = 'reviews.User'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
