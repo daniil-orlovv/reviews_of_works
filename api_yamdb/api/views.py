@@ -1,7 +1,7 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
 from django.shortcuts import get_object_or_404
@@ -10,13 +10,13 @@ from django.core.mail import send_mail
 
 import shortuuid
 
-from reviews.models import User, Code, Token
+from reviews.models import User, Code
 
 
-class SendCodeView(viewsets.ModelViewSet):
-    serializer_class = ...
+class SendCodeView(APIView):
+    permission_classes = (permissions.AllowAny,)
 
-    def perform_create(self, serializer):
+    def post(self, request):
         email = self.request.data.get('email')
         username = self.request.data.get('username')
         confirmation_code = shortuuid.uuid()[:6]
@@ -28,15 +28,12 @@ class SendCodeView(viewsets.ModelViewSet):
             [email],
             fail_silently=False,
         )
-        serializer.save(email=email, username=username)
         message = f'Confirmation code sent to {email}'
         return Response({'message': message}, status=status.HTTP_200_OK)
 
 
-class SendTokenView(TokenObtainPairView):
-    @staticmethod
-    @api_view(['POST'])
-    def post(request):
+class SendTokenView(APIView):
+    def post(self, request):
         confirmation_code = request.data.get('confirmation_code')
         email = request.data.get('email')
         user = get_object_or_404(User, email=email)
@@ -48,5 +45,4 @@ class SendTokenView(TokenObtainPairView):
             Token.objects.update_or_create(user=user, defaults={'key': token})
             return Response({'token': token}, status=status.HTTP_200_OK)
         else:
-            return Response({'error': 'Invalid confirmation code'},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid confirmation code'})

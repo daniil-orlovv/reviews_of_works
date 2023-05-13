@@ -14,7 +14,7 @@ class AuthUser(models.Model):
     user = models.ForeignKey(
         User,
         related_name='user_auth',
-        on_delete=models.SET_NULL
+        on_delete=models.CASCADE
     )
 
 
