@@ -37,6 +37,7 @@ class SendCodeView(APIView):
         message = f'Confirmation code sent to {email}'
         return Response({'message': message}, status=status.HTTP_200_OK)
 
+
 class SendTokenView(APIView):
     def post(self, request):
         confirmation_code = request.data.get('confirmation_code')
