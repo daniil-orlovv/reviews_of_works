@@ -19,8 +19,14 @@ class SendCodeView(APIView):
         email = self.request.data.get('email')
         username = self.request.data.get('username')
         confirmation_code = shortuuid.uuid()[:6]
-        user = User.objects.create(username=username, email=email)
-        Code.objects.create(user=user, code=confirmation_code)
+        user_obj, user_created = User.objects.update_or_create(
+            username=username,
+            defaults={'username': username, 'email': email}
+        )
+        code_obj, code_created = Code.objects.update_or_create(
+            user_id=user_obj.id,
+            defaults={'user_id': user_obj.id, 'code': confirmation_code}
+        )
         send_mail(
             'Confirmation Code',
             f'Your confirmation code: {confirmation_code}',
@@ -30,7 +36,6 @@ class SendCodeView(APIView):
         )
         message = f'Confirmation code sent to {email}'
         return Response({'message': message}, status=status.HTTP_200_OK)
-
 
 class SendTokenView(APIView):
     def post(self, request):
