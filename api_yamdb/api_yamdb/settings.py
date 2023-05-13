@@ -122,6 +122,13 @@ SIMPLE_JWT = {
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = BASE_DIR / 'emails'
 
+# EMAIL_HOST = 'smtp.mail.ru'
+# EMAIL_PORT = 465
+# EMAIL_HOST_USER = 'APIYamdb@mail.ru'
+# EMAIL_HOST_PASSWORD = 'D8961a442N925i9LlLlllll'
+# EMAIL_USE_TLS = False
+# EMAIL_USE_SSL = True
+
 AUTH_USER_MODEL = 'reviews.User'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
