@@ -126,7 +126,7 @@ EMAIL_FILE_PATH = BASE_DIR / 'emails'
 # EMAIL_HOST = 'smtp.mail.ru'
 # EMAIL_PORT = 465
 # EMAIL_HOST_USER = 'APIYamdb@mail.ru'
-# EMAIL_HOST_PASSWORD = 'D8961a442N925i9LlLlllll'
+# EMAIL_HOST_PASSWORD = ''
 # EMAIL_USE_TLS = False
 # EMAIL_USE_SSL = True
 
