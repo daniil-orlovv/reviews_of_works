@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework_simplejwt',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -118,6 +119,16 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = BASE_DIR / 'emails'
+
+# EMAIL_HOST = 'smtp.mail.ru'
+# EMAIL_PORT = 465
+# EMAIL_HOST_USER = 'APIYamdb@mail.ru'
+# EMAIL_HOST_PASSWORD = ''
+# EMAIL_USE_TLS = False
+# EMAIL_USE_SSL = True
 
 AUTH_USER_MODEL = 'reviews.User'
 
