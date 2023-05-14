@@ -1,16 +1,16 @@
 import shortuuid
 
-from rest_framework import status, permissions
+from rest_framework import status, permissions, viewsets
+from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import AccessToken
-
+from rest_framework.decorators import api_view, permission_classes
 from django.core.mail import send_mail
 
 from reviews.models import User, Code
 from api.serializers import UserSerializer
-from rest_framework.decorators import api_view
 
 
 class SendCodeView(APIView):
@@ -56,6 +56,7 @@ class SendTokenView(TokenObtainPairView):
 
 
 @api_view(['GET', 'PATCH'])
+@permission_classes([permissions.IsAuthenticated])
 def update_user(request):
     user = User.objects.get(pk=request.user.id)
     if request.method == 'PATCH':
@@ -67,3 +68,10 @@ def update_user(request):
     user = User.objects.get(pk=request.user.id)
     serializer = UserSerializer(user, many=False)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class AdminCRUDUser(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = 'username'
