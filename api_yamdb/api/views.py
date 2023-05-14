@@ -9,7 +9,6 @@ from django.core.mail import send_mail
 import shortuuid
 
 from reviews.models import User, Code
-from api.serializers import SendTokenSerializer
 
 
 class SendCodeView(APIView):
