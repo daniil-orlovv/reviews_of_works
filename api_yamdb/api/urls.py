@@ -12,5 +12,9 @@ urlpatterns = [
     path('v1/auth/token/', SendTokenView.as_view(), name='login'),
     path('v1/users/me/', update_user, name='create_user'),
     path('', include(router.urls)),
-    path('v1/users/<str:username>/', AdminCRUDUser.as_view({'get': 'retrieve'}), name='user-detail'),
+    path(
+        'v1/users/<str:username>/',
+        AdminCRUDUser.as_view({'get': 'retrieve'}),
+        name='user-detail'
+    ),
 ]
