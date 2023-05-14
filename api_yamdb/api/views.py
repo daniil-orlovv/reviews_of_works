@@ -1,15 +1,14 @@
 from rest_framework import status, permissions
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
-from rest_framework.authtoken.models import Token
-from django.shortcuts import get_object_or_404
 
 from django.core.mail import send_mail
 
 import shortuuid
 
 from reviews.models import User, Code
+from api.serializers import SendTokenSerializer
 
 
 class SendCodeView(APIView):
@@ -38,17 +37,17 @@ class SendCodeView(APIView):
         return Response({'message': message}, status=status.HTTP_200_OK)
 
 
-class SendTokenView(APIView):
-    def post(self, request):
+class SendTokenView(TokenObtainPairView):
+    serializer_class = SendTokenSerializer
+    def post(self, request, *args, **kwargs):
         confirmation_code = request.data.get('confirmation_code')
-        email = request.data.get('email')
-        user = get_object_or_404(User, email=email)
+        username = request.data.get('username')
         code = Code.objects.filter(code=confirmation_code).exists()
-
-        if code:
-            refresh = RefreshToken.for_user(user)
-            token = str(refresh.access_token)
-            Token.objects.update_or_create(user=user, defaults={'key': token})
-            return Response({'token': token}, status=status.HTTP_200_OK)
+        user = User.objects.filter(username=username).exists()
+        if code and user:
+            return super().post(request, *args, **kwargs)
         else:
-            return Response({'error': 'Invalid confirmation code'})
+            return Response({
+                'error': 'Invalid confirmation code or username'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
