@@ -1,6 +1,7 @@
 from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.views import APIView
 
 from django.core.mail import send_mail
@@ -38,14 +39,14 @@ class SendCodeView(APIView):
 
 
 class SendTokenView(TokenObtainPairView):
-    serializer_class = SendTokenSerializer
     def post(self, request, *args, **kwargs):
         confirmation_code = request.data.get('confirmation_code')
         username = request.data.get('username')
-        code = Code.objects.filter(code=confirmation_code).exists()
-        user = User.objects.filter(username=username).exists()
+        code = Code.objects.filter(code=confirmation_code).first()
+        user = User.objects.filter(username=username).first()
         if code and user:
-            return super().post(request, *args, **kwargs)
+            token = AccessToken.for_user(user)
+            return Response({'token': str(token)}, status=status.HTTP_200_OK)
         else:
             return Response({
                 'error': 'Invalid confirmation code or username'},
