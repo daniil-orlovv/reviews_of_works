@@ -14,14 +14,6 @@ class User(AbstractUser):
     role = models.CharField(max_length=50, default='user')
 
 
-class AuthUser(models.Model):
-    user = models.ForeignKey(
-        User,
-        related_name='user_auth',
-        on_delete=models.CASCADE
-    )
-
-
 class Code(models.Model):
     code = models.CharField(max_length=6, blank=True, null=True)
     user = models.ForeignKey(
