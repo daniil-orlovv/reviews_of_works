@@ -9,6 +9,8 @@ from rest_framework_simplejwt.tokens import AccessToken
 from django.core.mail import send_mail
 
 from reviews.models import User, Code
+from api.serializers import UserSerializer
+from rest_framework.decorators import api_view
 
 
 class SendCodeView(APIView):
@@ -51,3 +53,17 @@ class SendTokenView(TokenObtainPairView):
                 'error': 'Invalid confirmation code or username'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+@api_view(['GET', 'PATCH'])
+def update_user(request):
+    user = User.objects.get(pk=request.user.id)
+    if request.method == 'PATCH':
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    user = User.objects.get(pk=request.user.id)
+    serializer = UserSerializer(user, many=False)
+    return Response(serializer.data, status=status.HTTP_200_OK)
