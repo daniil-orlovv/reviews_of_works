@@ -23,6 +23,12 @@ class User(AbstractUser):
         default='user'
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['username', 'email'],
+                                    name='username_email_unique')
+        ]
+
 
 class Code(models.Model):
     code = models.CharField(max_length=6, blank=True, null=True)
