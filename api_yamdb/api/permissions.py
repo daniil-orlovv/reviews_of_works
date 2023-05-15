@@ -1,9 +1,12 @@
 from rest_framework import permissions
 
 
-class CustomPermission(permissions.BasePermission):
+class UserPermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        return True
+        role = request.user.role
 
-    def has_object_permission(self, request, view, obj):
-        return True
+        if role == 'админ':
+            return True
+
+        if role == 'модератор' and request.method in ['GET', 'POST']:
+            return True
