@@ -10,6 +10,7 @@ from django.core.mail import send_mail
 
 from reviews.models import User, Code
 from api.serializers import UserSerializer
+from api.permissions import AdminPermission
 
 
 class SendCodeView(APIView):
@@ -72,5 +73,5 @@ def update_user(request):
 class AdminCRUDUser(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AdminPermission, ]
     lookup_field = 'username'
