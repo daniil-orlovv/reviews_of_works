@@ -20,31 +20,36 @@ class SendCodeView(APIView):
         email = self.request.data.get('email')
         username = self.request.data.get('username')
         confirmation_code = shortuuid.uuid()[:6]
-        if User.objects.filter(username=username).exists():
-            return Response({
-                'message': 'Этот username занят! Используйте другой.'},
-                status=status.HTTP_400_BAD_REQUEST)
-        if User.objects.filter(email=email).exists():
-            return Response({
-                'message': 'Этот email уже используется! Укажите другой.'},
-                status=status.HTTP_400_BAD_REQUEST)
-        user_obj, user_created = User.objects.update_or_create(
-            username=username,
-            defaults={'username': username, 'email': email}
-        )
-        code_obj, code_created = Code.objects.update_or_create(
-            user_id=user_obj.id,
-            defaults={'user_id': user_obj.id, 'code': confirmation_code}
-        )
-        send_mail(
-            'Confirmation Code',
-            f'Your confirmation code: {confirmation_code}',
-            'from@example.com',
-            [email],
-            fail_silently=False,
-        )
-        message = f'Confirmation code sent to {email}'
-        return Response({'message': message}, status=status.HTTP_200_OK)
+        check_username = User.objects.filter(username=username).exists()
+        check_email = User.objects.filter(email=email).exists()
+        check_data = User.objects.filter(username=username, email=email).exists()
+        if check_data:
+            user_obj, user_created = User.objects.update_or_create(
+                username=username,
+                defaults={'username': username, 'email': email}
+            )
+            code_obj, code_created = Code.objects.update_or_create(
+                user_id=user_obj.id,
+                defaults={'user_id': user_obj.id, 'code': confirmation_code}
+            )
+            send_mail(
+                'Confirmation Code',
+                f'Your confirmation code: {confirmation_code}',
+                'from@example.com',
+                [email],
+                fail_silently=False,
+            )
+            message = f'Confirmation code sent to {email}'
+            return Response({'message': message}, status=status.HTTP_200_OK)
+        else:
+            if check_username:
+                return Response({
+                    'message': 'Этот username уже используется! Используйте другой.'},
+                    status=status.HTTP_400_BAD_REQUEST)
+            if check_email:
+                return Response({
+                    'message': 'Этот email уже используется! Используйте другой.'},
+                    status=status.HTTP_400_BAD_REQUEST)
 
 
 
