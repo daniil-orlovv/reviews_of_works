@@ -10,7 +10,7 @@ class AdminPermission(permissions.BasePermission):
         user = User.objects.get(id=user_id)
         role = user.role
 
-        if role == 'admin':
+        if role == 'admin' or user.is_superuser:
             return True
         else:
             raise PermissionDenied(

@@ -95,3 +95,26 @@ class AdminCRUDUser(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete', ]
+
+    def delete(self, request, username):
+        user = User.objects.get(username=username)
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        role = request.data.get('role')
+        if role and role not in ['user', 'moderator', 'admin']:
+            return Response(
+                {'error': 'Недопустимая роль'},
+                status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
