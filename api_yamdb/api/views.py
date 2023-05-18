@@ -46,12 +46,14 @@ class SendCodeView(APIView):
         else:
             if check_username:
                 return Response({
-                    'message': 'Этот username уже используется! Используйте другой.'},
-                    status=status.HTTP_400_BAD_REQUEST)
+                    'message': ('Этот username уже используется!'
+                                'Используйте другой.')},
+                                status=status.HTTP_400_BAD_REQUEST)
             if check_email:
                 return Response({
-                    'message': 'Этот email уже используется! Используйте другой.'},
-                    status=status.HTTP_400_BAD_REQUEST)
+                    'message': ('Этот email уже используется!'
+                                'Используйте другой.')},
+                                status=status.HTTP_400_BAD_REQUEST)
 
 
 class SendTokenView(TokenObtainPairView):

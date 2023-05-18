@@ -11,7 +11,8 @@ class UserSerializer(serializers.ModelSerializer):
         validators=[
             RegexValidator(
                 regex=r'^[\w.@+-]+$',
-                message="Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+                message=('Required. 150 characters or fewer.'
+                         'Letters, digits and @/./+/-/_ only.')
             ),
             MaxLengthValidator(150)
         ])
