@@ -10,10 +10,7 @@ class AdminPermission(permissions.BasePermission):
         user = User.objects.get(id=user_id)
         role = user.role
 
-        if role == 'admin' and request.method in ['GET',
-                                                  'POST',
-                                                  'PATCH',
-                                                  'DELETE']:
+        if role == 'admin':
             return True
         else:
             raise PermissionDenied(

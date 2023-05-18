@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 from django.core.validators import RegexValidator, MaxLengthValidator
 
 
@@ -31,7 +30,14 @@ class UserSerializer(serializers.ModelSerializer):
         validators=[
             MaxLengthValidator(150)
         ])
+    role = serializers.CharField(read_only=True)
 
     class Meta:
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role')
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role')
         model = User

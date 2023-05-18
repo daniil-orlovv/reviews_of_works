@@ -22,7 +22,9 @@ class SendCodeView(APIView):
         confirmation_code = shortuuid.uuid()[:6]
         check_username = User.objects.filter(username=username).exists()
         check_email = User.objects.filter(email=email).exists()
-        check_data = User.objects.filter(username=username, email=email).exists()
+        check_data = User.objects.filter(
+            username=username,
+            email=email).exists()
         if check_data:
             user_obj, user_created = User.objects.update_or_create(
                 username=username,
@@ -50,7 +52,6 @@ class SendCodeView(APIView):
                 return Response({
                     'message': 'Этот email уже используется! Используйте другой.'},
                     status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class SendTokenView(TokenObtainPairView):
@@ -87,7 +88,8 @@ def update_user(request):
 class AdminCRUDUser(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    #permission_classes = [AdminPermission, ]
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AdminPermission, ]
     lookup_field = 'username'
+    filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
+    http_method_names = ['get', 'post', 'patch', 'delete', ]
