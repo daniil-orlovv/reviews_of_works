@@ -1,6 +1,6 @@
 import shortuuid
 
-from rest_framework import status, permissions, viewsets
+from rest_framework import status, permissions, viewsets, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -20,6 +20,14 @@ class SendCodeView(APIView):
         email = self.request.data.get('email')
         username = self.request.data.get('username')
         confirmation_code = shortuuid.uuid()[:6]
+        if User.objects.filter(username=username).exists():
+            return Response({
+                'message': 'Этот username занят! Используйте другой.'},
+                status=status.HTTP_400_BAD_REQUEST)
+        if User.objects.filter(email=email).exists():
+            return Response({
+                'message': 'Этот email уже используется! Укажите другой.'},
+                status=status.HTTP_400_BAD_REQUEST)
         user_obj, user_created = User.objects.update_or_create(
             username=username,
             defaults={'username': username, 'email': email}
@@ -37,6 +45,7 @@ class SendCodeView(APIView):
         )
         message = f'Confirmation code sent to {email}'
         return Response({'message': message}, status=status.HTTP_200_OK)
+
 
 
 class SendTokenView(TokenObtainPairView):
@@ -73,5 +82,7 @@ def update_user(request):
 class AdminCRUDUser(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [AdminPermission, ]
+    #permission_classes = [AdminPermission, ]
+    permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'username'
+    search_fields = ('username',)
