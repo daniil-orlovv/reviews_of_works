@@ -43,17 +43,18 @@ class SendCodeView(APIView):
             )
             message = f'Confirmation code sent to {email}'
             return Response({'message': message}, status=status.HTTP_200_OK)
+        elif check_username:
+            return Response({
+                'message': ('Этот username уже используется!'
+                            'Используйте другой.')},
+                            status=status.HTTP_400_BAD_REQUEST)
+        elif check_email:
+            return Response({
+                'message': ('Этот email уже используется!'
+                            'Используйте другой.')},
+                            status=status.HTTP_400_BAD_REQUEST)
         else:
-            if check_username:
-                return Response({
-                    'message': ('Этот username уже используется!'
-                                'Используйте другой.')},
-                                status=status.HTTP_400_BAD_REQUEST)
-            if check_email:
-                return Response({
-                    'message': ('Этот email уже используется!'
-                                'Используйте другой.')},
-                                status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class SendTokenView(TokenObtainPairView):
@@ -77,6 +78,10 @@ class SendTokenView(TokenObtainPairView):
 def update_user(request):
     user = User.objects.get(pk=request.user.id)
     if request.method == 'PATCH':
+        if 'role' in request.data:
+            return Response(
+                {'Вы не можете изменять поле role'},
+                status=status.HTTP_400_BAD_REQUEST)
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -95,6 +100,32 @@ class AdminCRUDUser(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete', ]
+
+    def create(self, request, *args, **kwargs):
+        email = self.request.data.get('email')
+        username = self.request.data.get('username')
+        check_username = User.objects.filter(username=username).exists()
+        check_email = User.objects.filter(email=email).exists()
+        check_data = User.objects.filter(
+            username=username,
+            email=email).exists()
+        if check_data:
+            user_obj, user_created = User.objects.update_or_create(
+                username=username,
+                defaults={'username': username, 'email': email}
+            )
+            return super().create(request, *args, **kwargs)
+        else:
+            if check_username:
+                return Response({
+                    'message': ('Этот username уже используется!'
+                                'Используйте другой.')},
+                                status=status.HTTP_400_BAD_REQUEST)
+            if check_email:
+                return Response({
+                    'message': ('Этот email уже используется!'
+                                'Используйте другой.')},
+                                status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, username):
         user = User.objects.get(username=username)

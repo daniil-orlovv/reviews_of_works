@@ -31,7 +31,6 @@ class UserSerializer(serializers.ModelSerializer):
         validators=[
             MaxLengthValidator(150)
         ])
-    role = serializers.CharField(read_only=True)
 
     class Meta:
         fields = (
