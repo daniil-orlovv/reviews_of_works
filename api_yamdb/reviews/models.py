@@ -82,7 +82,7 @@ class Title(models.Model):
     name = models.TextField(
         verbose_name='Название'
     )
-    description = models.TextField(verbose_name='Описание')
+    description = models.TextField(verbose_name='Описание', null=True)
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,

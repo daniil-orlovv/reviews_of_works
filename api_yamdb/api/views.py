@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import api_view
+from rest_framework.pagination import PageNumberPagination
 
 from django.core.mail import send_mail
 from django.db.models import Avg
@@ -14,7 +15,7 @@ from reviews.models import User, Code, Category, Genre, Title
 from api.serializers import (UserSerializer, CategorySerializer,
                              GenreSerializer, TitleGetSerializer,
                              TitlePostSerializer)
-from .permissions import IsAdmin, ReadOnly
+from .permissions import IsAdmin, ReadOnly, CategoryPermission
 
 
 class CreateListDestroyViewSet(mixins.CreateModelMixin,
@@ -30,6 +31,8 @@ class CreateListDestroyViewSet(mixins.CreateModelMixin,
 class CategoryViewSet(CreateListDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    pagination_class = PageNumberPagination
+    permission_classes = [CategoryPermission, ]
 
 
 class GenreViewSet(CreateListDestroyViewSet):
@@ -38,8 +41,7 @@ class GenreViewSet(CreateListDestroyViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(
-        rating=Avg('reviews__score')).order_by('name')
+    queryset = Title.objects.all()
     ordering_fields = ('year', 'name')
     permission_classes = [IsAdmin | ReadOnly]
 

@@ -15,5 +15,5 @@ urlpatterns = [
     path('v1/auth/signup/', SendCodeView.as_view(), name='signup'),
     path('v1/auth/token/', SendTokenView.as_view(), name='login'),
     path('v1/users/me/', update_user, name='create_user'),
-    #path('', include(router.urls)),
+    path('v1/', include(router_v1.urls)),
 ]

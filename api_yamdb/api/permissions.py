@@ -9,16 +9,28 @@ class CustomPermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return True
 
-class IsAdmin(BasePermission):
+
+class IsAdmin(permissions.BasePermission):
     message = 'Пользователь не является администратором!'
 
     def has_permission(self, request, view):
         user = request.user
         return (
-            user.is_authenticated and user.is_admin
+            user.is_authenticated
         )
 
 
-class ReadOnly(BasePermission):
+class ReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.method in SAFE_METHODS
+
+
+class CategoryPermission(permissions.BasePermission):
+    message = 'Пользователь не является администратором!'
+
+    def has_permission(self, request, view):
+        user = request.user
+        return (
+            (user.is_authenticated and user.role not in ['user', 'moderator'])
+            or request.method in SAFE_METHODS
+        )
