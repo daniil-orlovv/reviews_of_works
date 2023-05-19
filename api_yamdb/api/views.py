@@ -7,6 +7,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
+from django_filters.rest_framework import DjangoFilterBackend
 
 from django.core.mail import send_mail
 from django.db.models import Avg
@@ -15,7 +16,8 @@ from reviews.models import User, Code, Category, Genre, Title
 from api.serializers import (UserSerializer, CategorySerializer,
                              GenreSerializer, TitleGetSerializer,
                              TitlePostSerializer)
-from .permissions import IsAdmin, ReadOnly, CategoryPermission
+from .permissions import IsAdmin, ReadOnly
+from .filters import GenreFilter
 
 
 class CreateListDestroyViewSet(mixins.CreateModelMixin,
@@ -32,7 +34,7 @@ class CategoryViewSet(CreateListDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     pagination_class = PageNumberPagination
-    permission_classes = [CategoryPermission, ]
+    permission_classes = [IsAdmin | ReadOnly]
 
 
 class GenreViewSet(CreateListDestroyViewSet):
@@ -44,6 +46,8 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     ordering_fields = ('year', 'name')
     permission_classes = [IsAdmin | ReadOnly]
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    filterset_class = GenreFilter
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':

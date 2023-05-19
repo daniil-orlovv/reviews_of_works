@@ -11,13 +11,11 @@ class CustomPermission(permissions.BasePermission):
 
 
 class IsAdmin(permissions.BasePermission):
-    message = 'Пользователь не является администратором!'
 
     def has_permission(self, request, view):
         user = request.user
         return (
-            user.is_authenticated
-        )
+            user.is_authenticated and user.role not in ['user', 'moderator'])
 
 
 class ReadOnly(permissions.BasePermission):

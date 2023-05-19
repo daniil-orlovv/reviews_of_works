@@ -34,12 +34,11 @@ class TitleGetSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
     description = serializers.CharField(required=False)
-    rating = serializers.FloatField()
 
     class Meta:
         model = Title
         fields = ('id', 'name', 'description', 'category',
-                  'genre', 'year', 'rating')
+                  'genre', 'year')
         read_only_fields = ('__all__',)
 
 
@@ -66,4 +65,10 @@ class TitlePostSerializer(serializers.ModelSerializer):
         year = dt.date.today().year
         if value > year:
             raise serializers.ValidationError('Проверьте указанный год')
+        return value
+
+    def validate_name(self, value):
+        if len(value) > 256:
+            raise serializers.ValidationError(
+                'Название не может быть больше 256 символов')
         return value
