@@ -18,24 +18,26 @@ from api.permissions import AdminPermission
 class SendCodeView(APIView):
     permission_classes = (permissions.AllowAny,)
 
+    @staticmethod
+    def validate_errors(username, email):
+        if not email or not username:
+            return {'Поле email и username не могут быть пустыми!'}
+        if len(email) > 254:
+            return {'Длина поля email не может превышать 254 символа!'}
+        if len(username) > 150:
+            return {'Длина поля username не может превышать 150 символов!'}
+        if username == 'me':
+            return {'Поле username не может принимать значение "me"!'}
+        if not re.match(r'^[\w.@+\-]*$', username):
+            return {'Используйте буквы, цифры и символы @/./+/-/_'}
+
     def post(self, request):
         email = self.request.data.get('email')
-        if len(email) > 254:
-            return Response(
-                {'email': 'Длина не может превышать 254 символа'},
-                status=status.HTTP_400_BAD_REQUEST)
         username = self.request.data.get('username')
-        if username == 'me':
+        validation_errors = self.validate_errors(username, email)
+        if validation_errors:
             return Response(
-                {'error': 'Используйте другой username'},
-                status=status.HTTP_400_BAD_REQUEST)
-        if len(username) > 150:
-            return Response(
-                {'username': 'Длина не может превышать 150 символа'},
-                status=status.HTTP_400_BAD_REQUEST)
-        if not re.match(r'^[\w.@+\-]*$', username):
-            return Response(
-                {'username': 'Неправильно заполено поле. Используйте "@", ".", "+", "-" и "_"'},
+                validation_errors,
                 status=status.HTTP_400_BAD_REQUEST)
         confirmation_code = shortuuid.uuid()[:6]
 
