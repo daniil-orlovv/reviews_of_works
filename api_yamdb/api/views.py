@@ -1,12 +1,14 @@
 import shortuuid
+import re
 
-from rest_framework import status, permissions, viewsets, filters
+from rest_framework import status, permissions, viewsets, filters, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import api_view, permission_classes
 from django.core.mail import send_mail
+from django.db import transaction, IntegrityError
 
 from reviews.models import User, Code
 from api.serializers import UserSerializer
@@ -18,43 +20,61 @@ class SendCodeView(APIView):
 
     def post(self, request):
         email = self.request.data.get('email')
+        if len(email) > 254:
+            return Response(
+                {'email': 'Длина не может превышать 254 символа'},
+                status=status.HTTP_400_BAD_REQUEST)
         username = self.request.data.get('username')
+        if username == 'me':
+            return Response(
+                {'error': 'Используйте другой username'},
+                status=status.HTTP_400_BAD_REQUEST)
+        if len(username) > 150:
+            return Response(
+                {'username': 'Длина не может превышать 150 символа'},
+                status=status.HTTP_400_BAD_REQUEST)
+        if not re.match(r'^[\w.@+\-]*$', username):
+            return Response(
+                {'username': 'Неправильно заполено поле. Используйте "@", ".", "+", "-" и "_"'},
+                status=status.HTTP_400_BAD_REQUEST)
         confirmation_code = shortuuid.uuid()[:6]
-        check_username = User.objects.filter(username=username).exists()
-        check_email = User.objects.filter(email=email).exists()
-        check_data = User.objects.filter(
-            username=username,
-            email=email).exists()
-        if check_data:
-            user_obj, user_created = User.objects.update_or_create(
-                username=username,
-                defaults={'username': username, 'email': email}
-            )
-            code_obj, code_created = Code.objects.update_or_create(
-                user_id=user_obj.id,
-                defaults={'user_id': user_obj.id, 'code': confirmation_code}
-            )
-            send_mail(
-                'Confirmation Code',
-                f'Your confirmation code: {confirmation_code}',
-                'from@example.com',
-                [email],
-                fail_silently=False,
-            )
-            message = f'Confirmation code sent to {email}'
-            return Response({'message': message}, status=status.HTTP_200_OK)
-        elif check_username:
-            return Response({
-                'message': ('Этот username уже используется!'
-                            'Используйте другой.')},
-                            status=status.HTTP_400_BAD_REQUEST)
-        elif check_email:
-            return Response({
-                'message': ('Этот email уже используется!'
-                            'Используйте другой.')},
-                            status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                user, created = User.objects.get_or_create(
+                    email=email,
+                    username=username)
+
+                if created:
+                    Code.objects.create(
+                        user_id=user.id,
+                        code=confirmation_code)
+                else:
+                    code_obj, code_created = Code.objects.update_or_create(
+                        user_id=user.id,
+                        defaults={
+                            'user_id': user.id,
+                            'code': confirmation_code}
+                    )
+
+                send_mail(
+                    'Confirmation Code',
+                    f'Your confirmation code: {confirmation_code}',
+                    'from@example.com',
+                    [email],
+                    fail_silently=False,
+                )
+
+                return Response(
+                    {'username': username, 'email': email},
+                    status=status.HTTP_200_OK
+                )
+
+        except IntegrityError:
+            error_message = {
+                'error':
+                'Пользователь с таким username или email уже существует.'}
+            return Response(error_message, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SendTokenView(TokenObtainPairView):
@@ -63,14 +83,18 @@ class SendTokenView(TokenObtainPairView):
         username = request.data.get('username')
         code = Code.objects.filter(code=confirmation_code).first()
         user = User.objects.filter(username=username).first()
-        if code and user:
-            token = AccessToken.for_user(user)
-            return Response({'token': str(token)}, status=status.HTTP_200_OK)
-        else:
+        if not code:
             return Response({
-                'error': 'Invalid confirmation code or username'},
-                status=status.HTTP_400_BAD_REQUEST
+                'error': 'Введен неверный код подтверждения!'},
+                status=status.HTTP_404_NOT_FOUND
             )
+        if not user:
+            return Response({
+                'error': 'Такого пользователя не существует!'},
+                status=status.HTTP_404_BAD_REQUEST
+            )
+        token = AccessToken.for_user(user)
+        return Response({'token': str(token)}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'PATCH'])
@@ -101,31 +125,16 @@ class AdminCRUDUser(viewsets.ModelViewSet):
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete', ]
 
-    def create(self, request, *args, **kwargs):
-        email = self.request.data.get('email')
-        username = self.request.data.get('username')
-        check_username = User.objects.filter(username=username).exists()
-        check_email = User.objects.filter(email=email).exists()
-        check_data = User.objects.filter(
-            username=username,
-            email=email).exists()
-        if check_data:
-            user_obj, user_created = User.objects.update_or_create(
-                username=username,
-                defaults={'username': username, 'email': email}
-            )
-            return super().create(request, *args, **kwargs)
-        else:
-            if check_username:
-                return Response({
-                    'message': ('Этот username уже используется!'
-                                'Используйте другой.')},
-                                status=status.HTTP_400_BAD_REQUEST)
-            if check_email:
-                return Response({
-                    'message': ('Этот email уже используется!'
-                                'Используйте другой.')},
-                                status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        username = serializer.validated_data.get('username')
+        email = serializer.validated_data.get('email')
+        if User.objects.filter(email=email).exists():
+            error_message = {'email': 'Этот email уже используется.'}
+            raise serializers.ValidationError(error_message)
+        if User.objects.filter(username=username).exists():
+            error_message = {'username': 'Этот username уже используется.'}
+            raise serializers.ValidationError(error_message)
+        serializer.save()
 
     def delete(self, request, username):
         user = User.objects.get(username=username)
