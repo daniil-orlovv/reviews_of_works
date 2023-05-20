@@ -112,7 +112,7 @@ def update_user(request):
 class AdminCRUDUser(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [AdminPermission, ]
+    permission_classes = [AdminPermission, permissions.IsAuthenticated]
     lookup_field = 'username'
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
