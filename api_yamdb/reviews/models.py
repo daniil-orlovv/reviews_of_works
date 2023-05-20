@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 
+
 def validate_year(value):
     year = dt.date.today().year
     if value > year:
@@ -110,8 +111,46 @@ class Title(models.Model):
 
 
 class Comment(models.Model):
-    ...
+    text = models.TextField(
+        verbose_name='Текст коммента', null=True
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='comments',
+        blank=True, null=True
+    )
+    score = models.IntegerField(
+        null=True)
+    pub_date = models.DateField(auto_now=True)
+
+    def __str__(self):
+        return self.text
 
 
 class Review(models.Model):
-    ...
+    title = models.ForeignKey(Title, on_delete=models.CASCADE, blank=True,
+                              null=True)
+    text = models.TextField(
+        verbose_name='Текст отзыва', null=True
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='reviews',
+        blank=True, null=True
+    )
+    score = models.IntegerField(
+        null=True)
+    pub_date = models.DateField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author'],
+                name='unique_author_review'
+            )
+        ]
+
+    def __str__(self):
+        return self.text

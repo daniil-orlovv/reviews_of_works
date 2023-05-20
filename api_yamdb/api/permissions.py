@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS
 
 
 class CustomPermission(permissions.BasePermission):
@@ -24,11 +24,25 @@ class ReadOnly(permissions.BasePermission):
 
 
 class CategoryPermission(permissions.BasePermission):
-    message = 'Пользователь не является администратором!'
-
     def has_permission(self, request, view):
         user = request.user
         return (
             (user.is_authenticated and user.role not in ['user', 'moderator'])
             or request.method in SAFE_METHODS
         )
+
+
+class IsUser(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        user = request.user
+        return (
+            (user.is_authenticated)
+            or request.method in SAFE_METHODS
+        )
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        return (request.method in SAFE_METHODS
+                or obj.author == user
+                or (user.is_authenticated))

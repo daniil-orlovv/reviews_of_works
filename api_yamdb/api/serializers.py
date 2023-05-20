@@ -1,9 +1,10 @@
 import datetime as dt
 from rest_framework import serializers
-from reviews.models import User
-from reviews.models import Title, Genre, Category
+from reviews.models import Title, Genre, Category, Review, User
 from django.core.validators import MaxValueValidator
-
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponseNotFound
+from django.http import Http404
 
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=True)
@@ -72,3 +73,39 @@ class TitlePostSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Название не может быть больше 256 символов')
         return value
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    text = serializers.CharField(
+        required=True
+    )
+    score = serializers.IntegerField(
+        required=True
+    )
+    pub_date = serializers.DateField(
+        read_only=True
+    )
+
+    def create(self, validated_data):
+        validated_data['author'] = self.context['request'].user
+        return super().create(validated_data)
+
+    class Meta:
+        model = Review
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
+
+    def validate(self, attrs):
+        # Проверка, что существует title
+        title_id = self.context.get('view').kwargs.get('title_id')
+        try:
+            get_object_or_404(Title, pk=title_id)
+        except BaseException:
+            raise Http404("Object not found")
+
+        # Проверка, что пользователь не сделал больше одного отзыва
+        user = self.context['request'].user
+
+        if Review.objects.filter(author=user).count() > 0:
+            raise serializers.ValidationError('You can only create one object.')
+
+        return attrs
