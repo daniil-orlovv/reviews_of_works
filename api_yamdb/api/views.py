@@ -11,7 +11,7 @@ from django.core.mail import send_mail
 from django.db import transaction, IntegrityError
 
 from reviews.models import User, Code
-from api.serializers import UserSerializer
+from api.serializers import UserSerializer, TokenRegSerializer
 from api.permissions import AdminPermission
 
 
@@ -34,14 +34,14 @@ class SendCodeView(APIView):
 
                     if created:
                         Code.objects.create(
-                            user_id=user.id,
-                            code=confirmation_code)
+                            username=username,
+                            confirmation_code=confirmation_code)
                     else:
                         code_obj, code_created = Code.objects.update_or_create(
-                            user_id=user.id,
+                            username=username,
                             defaults={
-                                'user_id': user.id,
-                                'code': confirmation_code}
+                                'username': username,
+                                'confirmation_code': confirmation_code}
                         )
 
                     send_mail(
@@ -69,17 +69,19 @@ class SendCodeView(APIView):
                 serializer.errors,
                 status=status.HTTP_400_BAD_REQUEST)
 
-
-class SendTokenView(TokenObtainPairView):
+@permission_classes([permissions.AllowAny])
+class SendTokenView(APIView):
     def post(self, request, *args, **kwargs):
-        confirmation_code = request.data.get('confirmation_code')
-        username = request.data.get('username')
-        code = get_object_or_404(Code, code=confirmation_code)
+        serializer = TokenRegSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        confirmation_code = serializer.validated_data.get('confirmation_code')
+        username = serializer.validated_data.get('username')
+        code = Code.objects.filter(confirmation_code=confirmation_code).exists()
         user = get_object_or_404(User, username=username)
         if not code:
             return Response({
                 'error': 'Введен неверный код подтверждения!'},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_400_BAD_REQUEST
             )
         if not user:
             return Response({

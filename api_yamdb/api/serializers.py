@@ -2,7 +2,7 @@ import re
 
 from rest_framework import serializers
 
-from reviews.models import User
+from reviews.models import User, Code
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -60,3 +60,17 @@ class UserSerializer(serializers.ModelSerializer):
             'bio',
             'role')
         model = User
+
+
+class TokenRegSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.CharField(required=True)
+
+    def validate_user(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                'Поле username не может быть пустым!')
+        return value
+
+    class Meta:
+        fields = ('username', 'confirmation_code')
