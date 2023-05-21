@@ -4,7 +4,6 @@ import shortuuid
 from rest_framework import status, permissions, viewsets, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import api_view, permission_classes
 from django.core.mail import send_mail
@@ -69,6 +68,7 @@ class SendCodeView(APIView):
                 serializer.errors,
                 status=status.HTTP_400_BAD_REQUEST)
 
+
 @permission_classes([permissions.AllowAny])
 class SendTokenView(APIView):
     def post(self, request, *args, **kwargs):
@@ -76,7 +76,8 @@ class SendTokenView(APIView):
         serializer.is_valid(raise_exception=True)
         confirmation_code = serializer.validated_data.get('confirmation_code')
         username = serializer.validated_data.get('username')
-        code = Code.objects.filter(confirmation_code=confirmation_code).exists()
+        code = Code.objects.filter(
+            confirmation_code=confirmation_code).exists()
         user = get_object_or_404(User, username=username)
         if not code:
             return Response({
