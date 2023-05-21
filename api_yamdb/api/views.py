@@ -84,11 +84,6 @@ class SendTokenView(APIView):
                 'error': 'Введен неверный код подтверждения!'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        if not user:
-            return Response({
-                'error': 'Такого пользователя не существует!'},
-                status=status.HTTP_404_NOT_FOUND
-            )
         token = AccessToken.for_user(user)
         return Response({'token': str(token)}, status=status.HTTP_200_OK)
 
