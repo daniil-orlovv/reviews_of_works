@@ -24,13 +24,11 @@ class SendCodeView(APIView):
             email = self.request.data.get('email')
             username = self.request.data.get('username')
             confirmation_code = shortuuid.uuid()[:6]
-
             try:
                 with transaction.atomic():
                     user, created = User.objects.get_or_create(
                         email=email,
                         username=username)
-
                     if created:
                         Code.objects.create(
                             username=username,
@@ -42,7 +40,6 @@ class SendCodeView(APIView):
                                 'username': username,
                                 'confirmation_code': confirmation_code}
                         )
-
                     send_mail(
                         'Confirmation Code',
                         f'Your confirmation code: {confirmation_code}',
@@ -50,12 +47,10 @@ class SendCodeView(APIView):
                         [email],
                         fail_silently=False,
                     )
-
                     return Response(
                         {'username': username, 'email': email},
                         status=status.HTTP_200_OK
                     )
-
             except IntegrityError:
                 error_message = {
                     'error':

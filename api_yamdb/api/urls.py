@@ -1,8 +1,8 @@
 from django.urls import include, path
-from rest_framework.routers import SimpleRouter, DefaultRouter
+from rest_framework.routers import SimpleRouter
 from api.views import SendCodeView, SendTokenView, update_user, AdminCRUDUser
 
-router = DefaultRouter()
+router = SimpleRouter()
 
 router.register('users', AdminCRUDUser)
 

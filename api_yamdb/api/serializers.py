@@ -2,7 +2,7 @@ import re
 
 from rest_framework import serializers
 
-from reviews.models import User, Code
+from reviews.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
