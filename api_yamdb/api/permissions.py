@@ -23,7 +23,7 @@ class ReadOnly(permissions.BasePermission):
         return request.method in SAFE_METHODS
 
 
-class ReviewPermission(permissions.BasePermission):
+class IsUser(permissions.BasePermission):
 
     def has_permission(self, request, view):
         user = request.user

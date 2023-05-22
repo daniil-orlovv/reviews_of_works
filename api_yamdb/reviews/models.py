@@ -111,24 +111,6 @@ class Title(models.Model):
         return self.name
 
 
-class Comment(models.Model):
-    text = models.TextField(
-        verbose_name='Текст коммента', null=True
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        related_name='comments',
-        blank=True, null=True
-    )
-    score = models.IntegerField(
-        null=True)
-    pub_date = models.DateField(auto_now=True)
-
-    def __str__(self):
-        return self.text
-
-
 class Review(models.Model):
     title = models.ForeignKey(Title, on_delete=models.CASCADE, blank=True,
                               null=True, related_name='reviews')
@@ -153,6 +135,24 @@ class Review(models.Model):
                 name='unique_author_review'
             )
         ]
+
+    def __str__(self):
+        return self.text
+
+
+class Comment(models.Model):
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, blank=True,
+                               null=True, related_name='comments')
+    text = models.TextField(
+        verbose_name='Текст коммента', null=True
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='comments',
+        blank=True, null=True
+    )
+    pub_date = models.DateField(auto_now=True)
 
     def __str__(self):
         return self.text

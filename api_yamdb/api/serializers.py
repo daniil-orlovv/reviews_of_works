@@ -1,6 +1,6 @@
 import datetime as dt
 from rest_framework import serializers
-from reviews.models import Title, Genre, Category, Review, User
+from reviews.models import Title, Genre, Category, Review, User, Comment
 from django.core.validators import MaxValueValidator
 from django.shortcuts import get_object_or_404
 from django.db.models import Avg
@@ -120,3 +120,20 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    text = serializers.CharField(
+        required=True
+    )
+    pub_date = serializers.DateField(
+        read_only=True
+    )
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True
+    )
+
+    class Meta:
+        model = Comment
+        fields = ('__all__')

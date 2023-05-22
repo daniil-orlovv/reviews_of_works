@@ -12,11 +12,12 @@ from django.shortcuts import get_object_or_404
 
 from django.core.mail import send_mail
 
-from reviews.models import User, Code, Category, Genre, Title, Review
+from reviews.models import User, Code, Category, Genre, Title, Review, Comment
 from api.serializers import (UserSerializer, CategorySerializer,
                              GenreSerializer, TitleGetSerializer,
-                             TitlePostSerializer, ReviewSerializer)
-from .permissions import IsAdmin, ReadOnly, ReviewPermission
+                             TitlePostSerializer, ReviewSerializer,
+                             CommentSerializer)
+from .permissions import IsAdmin, ReadOnly, IsUser
 from .filters import GenreFilter
 
 
@@ -57,7 +58,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = [ReviewPermission]
+    permission_classes = [IsUser]
 
     def get_queryset(self):
         title_id = self.kwargs['title_id']
@@ -67,6 +68,23 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
         serializer.save(author=self.request.user, title=title)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    permission_classes = [IsUser]
+
+    def get_queryset(self):
+        title_id = self.kwargs['title_id']
+        get_object_or_404(Title, pk=title_id)
+        review_id = self.kwargs['review_id']
+        get_object_or_404(Review, pk=review_id)
+        return Comment.objects.filter(review=review_id)
+
+    def perform_create(self, serializer):
+        get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        review = get_object_or_404(Review, id=self.kwargs.get('review_id'))
+        serializer.save(author=self.request.user, review=review)
 
 
 class SendCodeView(APIView):
