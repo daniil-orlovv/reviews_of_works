@@ -8,17 +8,15 @@ from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.exceptions import NotFound
 from django.shortcuts import get_object_or_404
 
 from django.core.mail import send_mail
-from django.db.models import Avg
 
-from reviews.models import User, Code, Category, Genre, Title, Review, Comment
+from reviews.models import User, Code, Category, Genre, Title, Review
 from api.serializers import (UserSerializer, CategorySerializer,
                              GenreSerializer, TitleGetSerializer,
                              TitlePostSerializer, ReviewSerializer)
-from .permissions import IsAdmin, ReadOnly, IsUser
+from .permissions import IsAdmin, ReadOnly, ReviewPermission
 from .filters import GenreFilter
 
 
@@ -59,12 +57,16 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = [IsUser]
+    permission_classes = [ReviewPermission]
 
     def get_queryset(self):
         title_id = self.kwargs['title_id']
         get_object_or_404(Title, pk=title_id)
         return Review.objects.filter(title=title_id)
+
+    def perform_create(self, serializer):
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, title=title)
 
 
 class SendCodeView(APIView):

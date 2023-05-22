@@ -2,6 +2,7 @@ import datetime as dt
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 def validate_year(value):
@@ -130,7 +131,7 @@ class Comment(models.Model):
 
 class Review(models.Model):
     title = models.ForeignKey(Title, on_delete=models.CASCADE, blank=True,
-                              null=True)
+                              null=True, related_name='reviews')
     text = models.TextField(
         verbose_name='Текст отзыва', null=True
     )
@@ -141,13 +142,14 @@ class Review(models.Model):
         blank=True, null=True
     )
     score = models.IntegerField(
-        null=True)
+        default=0,
+        validators=[MinValueValidator(1), MaxValueValidator(10)])
     pub_date = models.DateField(auto_now=True)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['author'],
+                fields=['author', 'title'],
                 name='unique_author_review'
             )
         ]

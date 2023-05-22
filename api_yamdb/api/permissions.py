@@ -23,16 +23,7 @@ class ReadOnly(permissions.BasePermission):
         return request.method in SAFE_METHODS
 
 
-class CategoryPermission(permissions.BasePermission):
-    def has_permission(self, request, view):
-        user = request.user
-        return (
-            (user.is_authenticated and user.role not in ['user', 'moderator'])
-            or request.method in SAFE_METHODS
-        )
-
-
-class IsUser(permissions.BasePermission):
+class ReviewPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
@@ -45,4 +36,4 @@ class IsUser(permissions.BasePermission):
         user = request.user
         return (request.method in SAFE_METHODS
                 or obj.author == user
-                or (user.is_authenticated))
+                or user.role in ['moderator', 'admin'])
