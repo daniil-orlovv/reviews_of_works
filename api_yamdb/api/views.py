@@ -1,79 +1,97 @@
+from django.shortcuts import get_object_or_404
 import shortuuid
 
 from rest_framework import status, permissions, viewsets, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import api_view, permission_classes
 from django.core.mail import send_mail
+from django.db import transaction, IntegrityError
 
 from reviews.models import User, Code
-from api.serializers import UserSerializer
+from api.serializers import UserSerializer, TokenRegSerializer
 from api.permissions import AdminPermission
 
 
 class SendCodeView(APIView):
     permission_classes = (permissions.AllowAny,)
+    serializer_class = UserSerializer
 
     def post(self, request):
-        email = self.request.data.get('email')
-        username = self.request.data.get('username')
-        confirmation_code = shortuuid.uuid()[:6]
-        check_username = User.objects.filter(username=username).exists()
-        check_email = User.objects.filter(email=email).exists()
-        check_data = User.objects.filter(username=username, email=email).exists()
-        if check_data:
-            user_obj, user_created = User.objects.update_or_create(
-                username=username,
-                defaults={'username': username, 'email': email}
-            )
-            code_obj, code_created = Code.objects.update_or_create(
-                user_id=user_obj.id,
-                defaults={'user_id': user_obj.id, 'code': confirmation_code}
-            )
-            send_mail(
-                'Confirmation Code',
-                f'Your confirmation code: {confirmation_code}',
-                'from@example.com',
-                [email],
-                fail_silently=False,
-            )
-            message = f'Confirmation code sent to {email}'
-            return Response({'message': message}, status=status.HTTP_200_OK)
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            email = self.request.data.get('email')
+            username = self.request.data.get('username')
+            confirmation_code = shortuuid.uuid()[:6]
+            try:
+                with transaction.atomic():
+                    user, created = User.objects.get_or_create(
+                        email=email,
+                        username=username)
+                    if created:
+                        Code.objects.create(
+                            username=username,
+                            confirmation_code=confirmation_code)
+                    else:
+                        code_obj, code_created = Code.objects.update_or_create(
+                            username=username,
+                            defaults={
+                                'username': username,
+                                'confirmation_code': confirmation_code}
+                        )
+                    send_mail(
+                        'Confirmation Code',
+                        f'Your confirmation code: {confirmation_code}',
+                        'from@example.com',
+                        [email],
+                        fail_silently=False,
+                    )
+                    return Response(
+                        {'username': username, 'email': email},
+                        status=status.HTTP_200_OK
+                    )
+            except IntegrityError:
+                error_message = {
+                    'error':
+                    'Пользователь с таким username или email уже существует.'}
+                return Response(
+                    error_message,
+                    status=status.HTTP_400_BAD_REQUEST)
         else:
-            if check_username:
-                return Response({
-                    'message': 'Этот username уже используется! Используйте другой.'},
-                    status=status.HTTP_400_BAD_REQUEST)
-            if check_email:
-                return Response({
-                    'message': 'Этот email уже используется! Используйте другой.'},
-                    status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST)
 
 
-
-class SendTokenView(TokenObtainPairView):
+@permission_classes([permissions.AllowAny])
+class SendTokenView(APIView):
     def post(self, request, *args, **kwargs):
-        confirmation_code = request.data.get('confirmation_code')
-        username = request.data.get('username')
-        code = Code.objects.filter(code=confirmation_code).first()
-        user = User.objects.filter(username=username).first()
-        if code and user:
-            token = AccessToken.for_user(user)
-            return Response({'token': str(token)}, status=status.HTTP_200_OK)
-        else:
+        serializer = TokenRegSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        confirmation_code = serializer.validated_data.get('confirmation_code')
+        username = serializer.validated_data.get('username')
+        code = Code.objects.filter(
+            confirmation_code=confirmation_code).exists()
+        user = get_object_or_404(User, username=username)
+        if not code:
             return Response({
-                'error': 'Invalid confirmation code or username'},
+                'error': 'Введен неверный код подтверждения!'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        token = AccessToken.for_user(user)
+        return Response({'token': str(token)}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'PATCH'])
 @permission_classes([permissions.IsAuthenticated])
 def update_user(request):
-    user = User.objects.get(pk=request.user.id)
+    user = get_object_or_404(User, pk=request.user.id)
     if request.method == 'PATCH':
+        if 'role' in request.data:
+            return Response(
+                {'Вы не можете изменять поле role'},
+                status=status.HTTP_400_BAD_REQUEST)
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -87,7 +105,15 @@ def update_user(request):
 class AdminCRUDUser(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    #permission_classes = [AdminPermission, ]
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AdminPermission, permissions.IsAuthenticated]
     lookup_field = 'username'
+    filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
+    http_method_names = ['get', 'post', 'patch', 'delete', ]
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except IntegrityError:
+            error_message = {'error': 'Этот username или email заняты.'}
+            return Response(error_message, status=status.HTTP_400_BAD_REQUEST)

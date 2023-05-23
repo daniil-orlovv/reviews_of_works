@@ -31,17 +31,12 @@ class User(AbstractUser):
 
 
 class Code(models.Model):
-    code = models.CharField(max_length=6, blank=True, null=True)
-    user = models.ForeignKey(
-        User,
-        related_name='user_code',
-        on_delete=models.CASCADE,
-        null=True
-    )
+    confirmation_code = models.CharField(max_length=6, blank=True, null=True)
+    username = models.CharField(max_length=150, null=True, blank=True)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['code', 'user'],
+            models.UniqueConstraint(fields=['confirmation_code', 'username'],
                                     name='code_user_unique')
         ]
 
