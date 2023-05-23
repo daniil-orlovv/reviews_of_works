@@ -2,6 +2,8 @@ import datetime as dt
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 
 def validate_year(value):
     year = dt.date.today().year
@@ -89,7 +91,7 @@ class Title(models.Model):
     name = models.TextField(
         verbose_name='Название'
     )
-    description = models.TextField(verbose_name='Описание')
+    description = models.TextField(verbose_name='Описание', null=True)
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -116,9 +118,48 @@ class Title(models.Model):
         return self.name
 
 
-class Comment(models.Model):
-    ...
-
-
 class Review(models.Model):
-    ...
+    title = models.ForeignKey(Title, on_delete=models.CASCADE, blank=True,
+                              null=True, related_name='reviews')
+    text = models.TextField(
+        verbose_name='Текст отзыва', null=True
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='reviews',
+        blank=True, null=True
+    )
+    score = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(1), MaxValueValidator(10)])
+    pub_date = models.DateField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'title'],
+                name='unique_author_review'
+            )
+        ]
+
+    def __str__(self):
+        return self.text
+
+
+class Comment(models.Model):
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, blank=True,
+                               null=True, related_name='comments')
+    text = models.TextField(
+        verbose_name='Текст коммента', null=True
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='comments',
+        blank=True, null=True
+    )
+    pub_date = models.DateField(auto_now=True)
+
+    def __str__(self):
+        return self.text
