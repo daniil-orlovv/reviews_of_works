@@ -9,6 +9,3 @@ class AdminPermission(permissions.BasePermission):
             role = request.user.role
             if role == 'admin' or request.user.is_superuser:
                 return True
-            else:
-                raise PermissionDenied(
-                    "Доступ запрещен. Только для Администратора.")
