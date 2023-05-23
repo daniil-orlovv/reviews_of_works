@@ -1,15 +1,12 @@
 import datetime as dt
-from rest_framework import serializers
-from reviews.models import Title, Genre, Category, Review, User, Comment
-from django.core.validators import MaxValueValidator
-from django.shortcuts import get_object_or_404
-from django.db.models import Avg
 import re
 
+from django.core.validators import MaxValueValidator
+from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from reviews.models import User
-
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -192,7 +189,7 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('__all__')
 
- 
+
 class TokenRegSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     confirmation_code = serializers.CharField(required=True)

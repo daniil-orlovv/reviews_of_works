@@ -1,12 +1,9 @@
 from django.urls import include, path
-from rest_framework.routers import SimpleRouter
+from rest_framework.routers import DefaultRouter, SimpleRouter
 
-from rest_framework.routers import DefaultRouter
-from api.views import SendCodeView, SendTokenView, update_user
-from api.views import (TitleViewSet, GenreViewSet,
-                       CategoryViewSet, ReviewViewSet,
-                       CommentViewSet)
-from api.views import SendCodeView, SendTokenView, update_user, AdminCRUDUser
+from api.views import (AdminCRUDUser, CategoryViewSet, CommentViewSet,
+                       GenreViewSet, ReviewViewSet, SendCodeView,
+                       SendTokenView, TitleViewSet, update_user)
 
 router = SimpleRouter()
 router_v1 = DefaultRouter()
@@ -28,4 +25,3 @@ urlpatterns = [
     path('v1/', include(router.urls)),
     path('v1/', include(router_v1.urls))
 ]
-

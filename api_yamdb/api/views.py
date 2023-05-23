@@ -1,31 +1,23 @@
-from django.shortcuts import get_object_or_404
 import shortuuid
 
-
-from rest_framework import status, permissions, viewsets, filters, mixins
-
+from django.core.mail import send_mail
+from django.db import IntegrityError, transaction
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 
-from rest_framework.pagination import PageNumberPagination
-from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
-from rest_framework.decorators import api_view, permission_classes
-from django.core.mail import send_mail
-from django.db import transaction, IntegrityError
-from reviews.models import User, Code
-from api.serializers import UserSerializer, TokenRegSerializer
-from api.permissions import AdminPermission
-
-
-from reviews.models import User, Code, Category, Genre, Title, Review, Comment
-from api.serializers import (UserSerializer, CategorySerializer,
-                             GenreSerializer, TitleGetSerializer,
-                             TitlePostSerializer, ReviewSerializer,
-                             CommentSerializer)
-from .permissions import IsAdmin, ReadOnly, IsUser
-from .filters import GenreFilter
+from api.filters import GenreFilter
+from api.permissions import IsAdmin, IsUser, ReadOnly, AdminPermission
+from reviews.models import Category, Code, Comment, Genre, Review, Title, User
+from api.serializers import (CategorySerializer, CommentSerializer,
+                             GenreSerializer, ReviewSerializer,
+                             TitleGetSerializer, TitlePostSerializer,
+                             TokenRegSerializer, UserSerializer)
 
 
 class CreateListDestroyViewSet(mixins.CreateModelMixin,
@@ -92,7 +84,6 @@ class CommentViewSet(viewsets.ModelViewSet):
         get_object_or_404(Title, id=self.kwargs.get('title_id'))
         review = get_object_or_404(Review, id=self.kwargs.get('review_id'))
         serializer.save(author=self.request.user, review=review)
-
 
 
 class SendCodeView(APIView):

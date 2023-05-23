@@ -1,7 +1,5 @@
 from rest_framework import permissions
 from rest_framework.permissions import SAFE_METHODS
-from rest_framework.exceptions import PermissionDenied
-
 
 
 class AdminPermission(permissions.BasePermission):
@@ -11,7 +9,7 @@ class AdminPermission(permissions.BasePermission):
             if role == 'admin' or request.user.is_superuser:
                 return True
 
-              
+
 class IsAdmin(permissions.BasePermission):
 
     def has_permission(self, request, view):
