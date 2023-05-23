@@ -1,15 +1,17 @@
 from rest_framework import permissions
 from rest_framework.permissions import SAFE_METHODS
+from rest_framework.exceptions import PermissionDenied
 
 
-class CustomPermission(permissions.BasePermission):
+
+class AdminPermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        return True
+        if request.user.is_authenticated:
+            role = request.user.role
+            if role == 'admin' or request.user.is_superuser:
+                return True
 
-    def has_object_permission(self, request, view, obj):
-        return True
-
-
+              
 class IsAdmin(permissions.BasePermission):
 
     def has_permission(self, request, view):

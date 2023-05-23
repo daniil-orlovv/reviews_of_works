@@ -13,33 +13,40 @@ def validate_year(value):
 
 
 class User(AbstractUser):
+    ROLE_CHOICES = [
+        ('user', 'User'),
+        ('moderator', 'Moderator'),
+        ('admin', 'Admin'),
+    ]
+
+    username = models.CharField(max_length=150, unique=True)
+    email = models.EmailField(max_length=254, unique=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
     bio = models.TextField(
         'Биография',
         blank=True
     )
-    role = models.CharField(max_length=50, default='user')
-
-
-class AuthUser(models.Model):
-    user = models.ForeignKey(
-        User,
-        related_name='user_auth',
-        on_delete=models.CASCADE
-    )
-
-
-class Code(models.Model):
-    code = models.CharField(max_length=6, blank=True, null=True)
-    user = models.ForeignKey(
-        User,
-        related_name='user_code',
-        on_delete=models.CASCADE,
-        null=True
+    role = models.CharField(
+        max_length=50,
+        choices=ROLE_CHOICES,
+        default='user'
     )
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['code', 'user'],
+            models.UniqueConstraint(fields=['username', 'email'],
+                                    name='username_email_unique')
+        ]
+
+
+class Code(models.Model):
+    confirmation_code = models.CharField(max_length=6, blank=True, null=True)
+    username = models.CharField(max_length=150, null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['confirmation_code', 'username'],
                                     name='code_user_unique')
         ]
 
