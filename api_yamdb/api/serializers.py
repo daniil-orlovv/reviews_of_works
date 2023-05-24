@@ -1,8 +1,7 @@
 import datetime as dt
 import re
 
-from django.core.validators import MaxValueValidator
-from django.db.models import Avg
+
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
@@ -70,7 +69,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('name', 'slug')
+        exclude = ['id']
         lookup_field = 'slug'
 
 
@@ -78,7 +77,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        fields = ('name', 'slug')
+        exclude = ['id']
         lookup_field = 'slug'
 
 
@@ -86,13 +85,7 @@ class TitleGetSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
     description = serializers.CharField(required=False)
-    rating = serializers.SerializerMethodField()
-
-    def get_rating(self, obj):
-        rate = obj.reviews.aggregate(rating=Avg('score'))
-        if not rate['rating']:
-            return None
-        return int(rate['rating'])
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
@@ -110,9 +103,6 @@ class TitlePostSerializer(serializers.ModelSerializer):
         many=True,
         queryset=Genre.objects.all(),
         slug_field='slug'
-    )
-    year = serializers.IntegerField(
-        validators=[MaxValueValidator(dt.date.today().year)]
     )
 
     class Meta:
@@ -147,10 +137,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         slug_field='username',
         read_only=True
     )
-
-    def create(self, validated_data):
-        validated_data['author'] = self.context['request'].user
-        return super().create(validated_data)
 
     def validate(self, attrs):
         title_id = self.context.get('view').kwargs.get('title_id')

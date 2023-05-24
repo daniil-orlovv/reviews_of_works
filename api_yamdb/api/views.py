@@ -4,7 +4,8 @@ from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, permissions, status, viewsets
+from django.db.models import Avg
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -18,16 +19,7 @@ from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, ReviewSerializer,
                              TitleGetSerializer, TitlePostSerializer,
                              TokenRegSerializer, UserSerializer)
-
-
-class CreateListDestroyViewSet(mixins.CreateModelMixin,
-                               mixins.DestroyModelMixin,
-                               mixins.ListModelMixin,
-                               viewsets.GenericViewSet):
-    permission_classes = [IsAdmin | ReadOnly]
-    lookup_field = 'slug'
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
+from api.mixins import CreateListDestroyViewSet
 
 
 class CategoryViewSet(CreateListDestroyViewSet):
@@ -54,6 +46,11 @@ class TitleViewSet(viewsets.ModelViewSet):
             return TitleGetSerializer
         return TitlePostSerializer
 
+    def get_queryset(self):
+        return Title.objects.all().annotate(
+            rating=Avg('reviews__score')
+        )
+
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
@@ -61,8 +58,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         title_id = self.kwargs['title_id']
-        get_object_or_404(Title, pk=title_id)
-        return Review.objects.filter(title=title_id)
+        title = get_object_or_404(Title, pk=title_id)
+        return title.reviews.all()
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, id=self.kwargs.get('title_id'))

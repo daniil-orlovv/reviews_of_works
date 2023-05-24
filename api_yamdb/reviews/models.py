@@ -1,16 +1,8 @@
-import datetime as dt
-
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.core.exceptions import ValidationError
+
 from django.core.validators import MinValueValidator, MaxValueValidator
-
-
-def validate_year(value):
-    year = dt.date.today().year
-    if value > year:
-        raise ValidationError('Проверьте указанный год')
-    return value
+from reviews.validators import validate_year
 
 
 class User(AbstractUser):
@@ -58,7 +50,7 @@ class Category(models.Model):
         max_length=256
     )
     slug = models.SlugField(
-        verbose_name='Идентификатор',
+        verbose_name='slug',
         max_length=50,
         unique=True
     )
@@ -76,7 +68,7 @@ class Genre(models.Model):
         max_length=256
     )
     slug = models.SlugField(
-        verbose_name='Идентификатор',
+        verbose_name='slug',
         max_length=50,
         unique=True
     )
@@ -133,7 +125,8 @@ class Review(models.Model):
     )
     score = models.IntegerField(
         default=0,
-        validators=[MinValueValidator(1), MaxValueValidator(10)])
+        validators=[MinValueValidator(1, message='Value must be 1 or higher'),
+                    MaxValueValidator(10, message='Value must be above 10')])
     pub_date = models.DateField(auto_now=True)
 
     class Meta:
@@ -143,6 +136,7 @@ class Review(models.Model):
                 name='unique_author_review'
             )
         ]
+        ordering = ['-pub_date']
 
     def __str__(self):
         return self.text
@@ -161,6 +155,9 @@ class Comment(models.Model):
         blank=True, null=True
     )
     pub_date = models.DateField(auto_now=True)
+
+    class Meta:
+        ordering = ['-pub_date']
 
     def __str__(self):
         return self.text
