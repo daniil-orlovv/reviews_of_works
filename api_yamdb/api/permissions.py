@@ -1,9 +1,7 @@
 from rest_framework import permissions
 from rest_framework.permissions import SAFE_METHODS
 
-ADMIN = 'admin'
-USER = 'user'
-MODERATOR = 'moderator'
+from api_yamdb.settings import ADMIN, USER, MODERATOR
 
 
 class AdminPermission(permissions.BasePermission):

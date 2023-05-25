@@ -2,14 +2,16 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 from django.core.validators import MinValueValidator, MaxValueValidator
+
 from reviews.validators import validate_year
+from api_yamdb.settings import ADMIN, USER, MODERATOR
 
 
 class User(AbstractUser):
     ROLE_CHOICES = [
-        ('user', 'User'),
-        ('moderator', 'Moderator'),
-        ('admin', 'Admin'),
+        ('admin', ADMIN),
+        ('user', USER),
+        ('moderator', MODERATOR),
     ]
 
     username = models.CharField(max_length=150, unique=True)
@@ -23,8 +25,9 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=50,
         choices=ROLE_CHOICES,
-        default='user'
+        default=USER
     )
+    confirmation_code = models.CharField(max_length=6, blank=True, null=True)
 
     class Meta:
         constraints = [
@@ -32,16 +35,10 @@ class User(AbstractUser):
                                     name='username_email_unique')
         ]
 
-
-class Code(models.Model):
-    confirmation_code = models.CharField(max_length=6, blank=True, null=True)
-    username = models.CharField(max_length=150, null=True, blank=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['confirmation_code', 'username'],
-                                    name='code_user_unique')
-        ]
+    @property
+    def role_user(self):
+        role_dict = {key: value for key, value in self.ROLE_CHOICES}
+        return role_dict.get(self.role, 'Unknown')
 
 
 class Category(models.Model):

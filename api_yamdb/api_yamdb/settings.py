@@ -143,3 +143,7 @@ CONFIRMATION_CODE = shortuuid.uuid()[:6]
 FROM_MAIL = 'project@mail.ru'
 THEME_MAIL = 'Confirmation Code'
 TEXT_MAIL = f'Your confirmation code: {CONFIRMATION_CODE}'
+
+ADMIN = 'admin'
+USER = 'user'
+MODERATOR = 'moderator'

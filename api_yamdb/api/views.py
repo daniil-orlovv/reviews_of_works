@@ -1,3 +1,5 @@
+import shortuuid
+
 from django.core.mail import send_mail
 from django.db import transaction
 from django.shortcuts import get_object_or_404
@@ -12,15 +14,14 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from api.filters import GenreFilter
 from api.permissions import IsAdmin, IsUser, ReadOnly, AdminPermission
-from reviews.models import Category, Code, Comment, Genre, Review, Title, User
+from reviews.models import Category, Comment, Genre, Review, Title, User
 from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, ReviewSerializer,
                              TitleGetSerializer, TitlePostSerializer,
                              TokenRegSerializer, UserSerializer,
                              AdminCRUDSerializer)
 from api.mixins import CreateListDestroyViewSet
-from api_yamdb.settings import (FROM_MAIL, THEME_MAIL, TEXT_MAIL,
-                                CONFIRMATION_CODE)
+from api_yamdb.settings import FROM_MAIL, THEME_MAIL
 
 
 class CategoryViewSet(CreateListDestroyViewSet):
@@ -94,10 +95,11 @@ class SendCodeView(APIView):
 
         email = serializer.validated_data.get('email')
         username = serializer.validated_data.get('username')
+        confirmation_code = shortuuid.uuid()[:6]
         if User.objects.filter(username=username, email=email).exists():
             send_mail(
                 THEME_MAIL,
-                TEXT_MAIL,
+                f'Ваш код подтверждения: {confirmation_code}',
                 FROM_MAIL,
                 [email],
                 fail_silently=False,
@@ -118,23 +120,16 @@ class SendCodeView(APIView):
             )
         else:
             with transaction.atomic():
-                user, created = User.objects.get_or_create(
-                    email=email,
-                    username=username)
-                if created:
-                    Code.objects.create(
-                        username=username,
-                        confirmation_code=CONFIRMATION_CODE)
-                else:
-                    code_obj, code_created = Code.objects.update_or_create(
-                        username=username,
-                        defaults={
-                            'username': username,
-                            'confirmation_code': CONFIRMATION_CODE}
-                    )
+                user, user_created = User.objects.update_or_create(
+                    username=username,
+                    defaults={
+                        'username': username,
+                        'email': email,
+                        'confirmation_code': confirmation_code}
+                )
                 send_mail(
                     THEME_MAIL,
-                    TEXT_MAIL,
+                    f'Ваш код подтверждения: {confirmation_code}',
                     FROM_MAIL,
                     [email],
                     fail_silently=False,
@@ -152,10 +147,10 @@ class SendTokenView(APIView):
         serializer.is_valid(raise_exception=True)
         confirmation_code = serializer.validated_data.get('confirmation_code')
         username = serializer.validated_data.get('username')
-        code = Code.objects.filter(
+        code_exist = User.objects.filter(
             confirmation_code=confirmation_code).exists()
         user = get_object_or_404(User, username=username)
-        if not code:
+        if not code_exist:
             return Response({
                 'error': 'Введен неверный код подтверждения!'},
                 status=status.HTTP_400_BAD_REQUEST
