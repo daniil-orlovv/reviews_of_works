@@ -1,6 +1,8 @@
 import os
+import shortuuid
 from pathlib import Path
 from datetime import timedelta
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -137,4 +139,7 @@ AUTH_USER_MODEL = 'reviews.User'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-PROJECT_EMAIL = 'project@mail.ru'
+CONFIRMATION_CODE = shortuuid.uuid()[:6]
+FROM_MAIL = 'project@mail.ru'
+THEME_MAIL = 'Confirmation Code'
+TEXT_MAIL = f'Your confirmation code: {CONFIRMATION_CODE}'

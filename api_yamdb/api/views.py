@@ -1,11 +1,9 @@
-import shortuuid
-
 from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Avg
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import filters, permissions, status, viewsets, serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -20,7 +18,8 @@ from api.serializers import (CategorySerializer, CommentSerializer,
                              TitleGetSerializer, TitlePostSerializer,
                              TokenRegSerializer, UserSerializer)
 from api.mixins import CreateListDestroyViewSet
-from api_yamdb.settings import PROJECT_EMAIL
+from api_yamdb.settings import (FROM_MAIL, THEME_MAIL, TEXT_MAIL,
+                                CONFIRMATION_CODE)
 
 
 class CategoryViewSet(CreateListDestroyViewSet):
@@ -94,8 +93,29 @@ class SendCodeView(APIView):
 
         email = serializer.validated_data.get('email')
         username = serializer.validated_data.get('username')
-        confirmation_code = shortuuid.uuid()[:6]
-        try:
+        if User.objects.filter(username=username, email=email).exists():
+            send_mail(
+                THEME_MAIL,
+                TEXT_MAIL,
+                FROM_MAIL,
+                [email],
+                fail_silently=False,
+            )
+            return Response(
+                {'username': username, 'email': email},
+                status=status.HTTP_200_OK
+            )
+        if User.objects.filter(username=username).exists():
+            return Response(
+                {'Этот username занят!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if User.objects.filter(email=email).exists():
+            return Response(
+                {'Этот email занят!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        else:
             with transaction.atomic():
                 user, created = User.objects.get_or_create(
                     email=email,
@@ -103,18 +123,18 @@ class SendCodeView(APIView):
                 if created:
                     Code.objects.create(
                         username=username,
-                        confirmation_code=confirmation_code)
+                        confirmation_code=CONFIRMATION_CODE)
                 else:
                     code_obj, code_created = Code.objects.update_or_create(
                         username=username,
                         defaults={
                             'username': username,
-                            'confirmation_code': confirmation_code}
+                            'confirmation_code': CONFIRMATION_CODE}
                     )
                 send_mail(
-                    'Confirmation Code',
-                    f'Your confirmation code: {confirmation_code}',
-                    PROJECT_EMAIL,
+                    THEME_MAIL,
+                    TEXT_MAIL,
+                    FROM_MAIL,
                     [email],
                     fail_silently=False,
                 )
@@ -122,13 +142,7 @@ class SendCodeView(APIView):
                     {'username': username, 'email': email},
                     status=status.HTTP_200_OK
                 )
-        except IntegrityError:
-            error_message = {
-                'error':
-                'Пользователь с таким username или email уже существует.'}
-            return Response(
-                error_message,
-                status=status.HTTP_400_BAD_REQUEST)
+
 
 
 @permission_classes([permissions.AllowAny])

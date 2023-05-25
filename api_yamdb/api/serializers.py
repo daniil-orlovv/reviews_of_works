@@ -1,6 +1,5 @@
 import re
 
-
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import serializers
@@ -10,7 +9,7 @@ from reviews.models import Category, Comment, Genre, Review, Title, User
 
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
-        required=True)
+        required=True, max_length=150)
     email = serializers.EmailField(
         required=True, max_length=254)
     first_name = serializers.CharField(
@@ -28,9 +27,6 @@ class UserSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError(
                 'Поле username не может быть пустым!')
-        if len(value) > 150:
-            raise serializers.ValidationError(
-                'Поле username не может быть более 150 символов!')
         if not re.match(r'^[\w.@+\-]*$', value):
             raise serializers.ValidationError(
                 'Используйте буквы, цифры и символы @/./+/-/_')
