@@ -8,7 +8,7 @@ from api.views import (AdminCRUDUser, CategoryViewSet, CommentViewSet,
 router = SimpleRouter()
 router_v1 = DefaultRouter()
 
-router.register('users', AdminCRUDUser)
+router_v1.register('users', AdminCRUDUser)
 router_v1.register('titles', TitleViewSet, basename='titles')
 router_v1.register('genres', GenreViewSet, basename='genres')
 router_v1.register('categories', CategoryViewSet, basename='categories')
@@ -19,9 +19,8 @@ router_v1.register(
     CommentViewSet, basename='comments')
 
 urlpatterns = [
-    path('v1/auth/signup/', SendCodeView.as_view()),
+    path('v1/auth/signup/', SendCodeView.as_view(), name='send_confcode'),
     path('v1/auth/token/', SendTokenView.as_view()),
     path('v1/users/me/', update_user),
-    path('v1/', include(router.urls)),
     path('v1/', include(router_v1.urls))
 ]
