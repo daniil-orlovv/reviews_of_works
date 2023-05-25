@@ -8,10 +8,10 @@ MODERATOR = 'moderator'
 
 class AdminPermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        role = request.user.role
+        user = request.user
         return (
             request.user.is_authenticated
-            and role == ADMIN or request.user.is_superuser)
+            and (user.role == ADMIN or request.user.is_superuser))
 
 
 class IsAdmin(permissions.BasePermission):
