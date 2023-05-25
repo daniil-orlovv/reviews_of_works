@@ -12,16 +12,13 @@ class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         required=True)
     email = serializers.EmailField(
-        required=True)
+        required=True, max_length=254)
     first_name = serializers.CharField(
         required=False)
     last_name = serializers.CharField(
         required=False)
 
     def validate_email(self, value):
-        if len(value) > 150:
-            raise serializers.ValidationError(
-                'Поле email не может быть более 254 символов!')
         if not value:
             raise serializers.ValidationError(
                 'Поле email не может быть пустым!')
@@ -37,7 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
         if not re.match(r'^[\w.@+\-]*$', value):
             raise serializers.ValidationError(
                 'Используйте буквы, цифры и символы @/./+/-/_')
-        if value == 'me':
+        if value.lower() == 'me':
             raise serializers.ValidationError(
                 'Поле username не может принимать значение "me"!')
         return value
