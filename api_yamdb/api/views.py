@@ -89,47 +89,44 @@ class SendCodeView(APIView):
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            email = self.request.data.get('email')
-            username = self.request.data.get('username')
-            confirmation_code = shortuuid.uuid()[:6]
-            try:
-                with transaction.atomic():
-                    user, created = User.objects.get_or_create(
-                        email=email,
-                        username=username)
-                    if created:
-                        Code.objects.create(
-                            username=username,
-                            confirmation_code=confirmation_code)
-                    else:
-                        code_obj, code_created = Code.objects.update_or_create(
-                            username=username,
-                            defaults={
-                                'username': username,
-                                'confirmation_code': confirmation_code}
-                        )
-                    send_mail(
-                        'Confirmation Code',
-                        f'Your confirmation code: {confirmation_code}',
-                        'from@example.com',
-                        [email],
-                        fail_silently=False,
+        serializer.is_valid(raise_exception=True)
+
+        email = self.request.data.get('email')
+        username = self.request.data.get('username')
+        confirmation_code = shortuuid.uuid()[:6]
+        try:
+            with transaction.atomic():
+                user, created = User.objects.get_or_create(
+                    email=email,
+                    username=username)
+                if created:
+                    Code.objects.create(
+                        username=username,
+                        confirmation_code=confirmation_code)
+                else:
+                    code_obj, code_created = Code.objects.update_or_create(
+                        username=username,
+                        defaults={
+                            'username': username,
+                            'confirmation_code': confirmation_code}
                     )
-                    return Response(
-                        {'username': username, 'email': email},
-                        status=status.HTTP_200_OK
-                    )
-            except IntegrityError:
-                error_message = {
-                    'error':
-                    'Пользователь с таким username или email уже существует.'}
+                send_mail(
+                    'Confirmation Code',
+                    f'Your confirmation code: {confirmation_code}',
+                    'from@example.com',
+                    [email],
+                    fail_silently=False,
+                )
                 return Response(
-                    error_message,
-                    status=status.HTTP_400_BAD_REQUEST)
-        else:
+                    {'username': username, 'email': email},
+                    status=status.HTTP_200_OK
+                )
+        except IntegrityError:
+            error_message = {
+                'error':
+                'Пользователь с таким username или email уже существует.'}
             return Response(
-                serializer.errors,
+                error_message,
                 status=status.HTTP_400_BAD_REQUEST)
 
 
