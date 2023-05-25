@@ -91,8 +91,8 @@ class SendCodeView(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        email = self.request.data.get('email')
-        username = self.request.data.get('username')
+        email = serializer.validated_data.get('email')
+        username = serializer.validated_data.get('username')
         confirmation_code = shortuuid.uuid()[:6]
         try:
             with transaction.atomic():
