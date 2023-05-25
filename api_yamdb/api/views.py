@@ -1,10 +1,10 @@
 from django.core.mail import send_mail
-from django.db import IntegrityError, transaction
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Avg
-from rest_framework import filters, permissions, status, viewsets, serializers
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework import filters, permissions, status, viewsets
+from rest_framework.decorators import permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -16,7 +16,8 @@ from reviews.models import Category, Code, Comment, Genre, Review, Title, User
 from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, ReviewSerializer,
                              TitleGetSerializer, TitlePostSerializer,
-                             TokenRegSerializer, UserSerializer)
+                             TokenRegSerializer, UserSerializer,
+                             AdminCRUDSerializer)
 from api.mixins import CreateListDestroyViewSet
 from api_yamdb.settings import (FROM_MAIL, THEME_MAIL, TEXT_MAIL,
                                 CONFIRMATION_CODE)
@@ -144,7 +145,6 @@ class SendCodeView(APIView):
                 )
 
 
-
 @permission_classes([permissions.AllowAny])
 class SendTokenView(APIView):
     def post(self, request, *args, **kwargs):
@@ -192,16 +192,9 @@ class GetUpdateUserProfile(viewsets.ModelViewSet):
 
 class AdminCRUDUser(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = AdminCRUDSerializer
     permission_classes = [AdminPermission, permissions.IsAuthenticated]
     lookup_field = 'username'
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete', ]
-
-    def create(self, request, *args, **kwargs):
-        try:
-            return super().create(request, *args, **kwargs)
-        except IntegrityError:
-            error_message = {'error': 'Этот username или email заняты.'}
-            return Response(error_message, status=status.HTTP_400_BAD_REQUEST)
