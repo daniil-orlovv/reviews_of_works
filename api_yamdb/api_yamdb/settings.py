@@ -136,3 +136,5 @@ EMAIL_FILE_PATH = BASE_DIR / 'emails'
 AUTH_USER_MODEL = 'reviews.User'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+PROJECT_EMAIL = 'project@mail.ru'

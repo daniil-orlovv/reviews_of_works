@@ -20,6 +20,7 @@ from api.serializers import (CategorySerializer, CommentSerializer,
                              TitleGetSerializer, TitlePostSerializer,
                              TokenRegSerializer, UserSerializer)
 from api.mixins import CreateListDestroyViewSet
+from api_yamdb.settings import PROJECT_EMAIL
 
 
 class CategoryViewSet(CreateListDestroyViewSet):
@@ -113,7 +114,7 @@ class SendCodeView(APIView):
                 send_mail(
                     'Confirmation Code',
                     f'Your confirmation code: {confirmation_code}',
-                    'from@example.com',
+                    PROJECT_EMAIL,
                     [email],
                     fail_silently=False,
                 )
