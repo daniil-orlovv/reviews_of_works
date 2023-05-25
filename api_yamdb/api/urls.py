@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter, SimpleRouter
 
 from api.views import (AdminCRUDUser, CategoryViewSet, CommentViewSet,
                        GenreViewSet, ReviewViewSet, SendCodeView,
-                       SendTokenView, TitleViewSet, update_user)
+                       SendTokenView, TitleViewSet, GetUpdateUserProfile)
 
 router = SimpleRouter()
 router_v1 = DefaultRouter()
@@ -21,6 +21,8 @@ router_v1.register(
 urlpatterns = [
     path('v1/auth/signup/', SendCodeView.as_view(), name='send_confcode'),
     path('v1/auth/token/', SendTokenView.as_view()),
-    path('v1/users/me/', update_user),
+    path('v1/users/me/', GetUpdateUserProfile.as_view({
+        'get': 'retrieve',
+        'patch': 'partial_update'})),
     path('v1/', include(router_v1.urls))
 ]

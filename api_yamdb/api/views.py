@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Avg
 from rest_framework import filters, permissions, status, viewsets, serializers
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -164,23 +164,30 @@ class SendTokenView(APIView):
         return Response({'token': str(token)}, status=status.HTTP_200_OK)
 
 
-@api_view(['GET', 'PATCH'])
-@permission_classes([permissions.IsAuthenticated])
-def update_user(request):
-    user = get_object_or_404(User, pk=request.user.id)
-    if request.method == 'PATCH':
+class GetUpdateUserProfile(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    http_method_names = ['get', 'patch', ]
+
+    def retrieve(self, request, *args, **kwargs):
+        username = request.user.username
+        user = User.objects.get(username=username)
+        serializer = self.get_serializer(user)
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
         if 'role' in request.data:
             return Response(
                 {'Вы не можете изменять поле role'},
                 status=status.HTTP_400_BAD_REQUEST)
-        serializer = UserSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    user = User.objects.get(pk=request.user.id)
-    serializer = UserSerializer(user, many=False)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+        username = request.user
+        serializer = self.get_serializer(
+            username,
+            data=request.data,
+            partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class AdminCRUDUser(viewsets.ModelViewSet):
