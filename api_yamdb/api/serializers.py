@@ -177,11 +177,5 @@ class TokenRegSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     confirmation_code = serializers.CharField(required=True)
 
-    def validate_user(self, value):
-        if not value:
-            raise serializers.ValidationError(
-                'Поле username не может быть пустым!')
-        return value
-
     class Meta:
         fields = ('username', 'confirmation_code')
