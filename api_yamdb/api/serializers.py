@@ -17,12 +17,6 @@ class UserSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(
         required=False)
 
-    def validate_email(self, value):
-        if not value:
-            raise serializers.ValidationError(
-                'Поле email не может быть пустым!')
-        return value
-
     def validate_username(self, value):
         if not value:
             raise serializers.ValidationError(
