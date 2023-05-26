@@ -1,15 +1,13 @@
 from rest_framework import permissions
 from rest_framework.permissions import SAFE_METHODS
 
-from api_yamdb.settings import ADMIN, USER, MODERATOR
-
 
 class AdminPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         user = request.user
         return (
             request.user.is_authenticated
-            and (user.role == ADMIN or request.user.is_superuser))
+            and (user.is_admin or request.user.is_superuser))
 
 
 class IsAdmin(permissions.BasePermission):
@@ -17,7 +15,9 @@ class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         user = request.user
         return (
-            user.is_authenticated and user.role not in (USER, MODERATOR))
+            user.is_authenticated
+            and not user.is_user
+            and not user.is_moderator)
 
 
 class GetUpdateUserPermission(permissions.BasePermission):
@@ -45,4 +45,5 @@ class IsUser(permissions.BasePermission):
         user = request.user
         return (request.method in SAFE_METHODS
                 or obj.author == user
-                or user.role in (MODERATOR, ADMIN))
+                or user.is_moderator
+                or user.is_admin)

@@ -1,7 +1,6 @@
 import shortuuid
 
 from django.core.mail import send_mail
-from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Avg
@@ -134,25 +133,6 @@ class SendTokenView(APIView):
             )
         token = AccessToken.for_user(user)
         return Response({'token': str(token)}, status=status.HTTP_200_OK)
-
-
-# @api_view(['GET', 'PATCH'])
-# @permission_classes([permissions.IsAuthenticated])
-# def update_user(request):
-#     user = get_object_or_404(User, pk=request.user.id)
-#     if request.method == 'PATCH':
-#         if 'role' in request.data:
-#             return Response(
-#                 {'Вы не можете изменять поле role'},
-#                 status=status.HTTP_400_BAD_REQUEST)
-#         serializer = UserSerializer(user, data=request.data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#     user = User.objects.get(pk=request.user.id)
-#     serializer = UserSerializer(user, many=False)
-#     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class GetUpdateUserProfile(viewsets.ModelViewSet):

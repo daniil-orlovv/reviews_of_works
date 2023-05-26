@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 from reviews.validators import validate_year
@@ -9,9 +8,9 @@ from api_yamdb.settings import ADMIN, USER, MODERATOR
 
 class User(AbstractUser):
     ROLE_CHOICES = [
-        ('admin', ADMIN),
-        ('user', USER),
-        ('moderator', MODERATOR),
+        (ADMIN, 'admin'),
+        (USER, 'user'),
+        (MODERATOR, 'moderator'),
     ]
 
     username = models.CharField(max_length=150, unique=True)
@@ -36,9 +35,16 @@ class User(AbstractUser):
         ]
 
     @property
-    def role_user(self):
-        role_dict = {key: value for key, value in self.ROLE_CHOICES}
-        return role_dict.get(self.role, 'Unknown')
+    def is_admin(self):
+        return self.role == ADMIN
+
+    @property
+    def is_user(self):
+        return self.role == USER
+
+    @property
+    def is_moderator(self):
+        return self.role == MODERATOR
 
 
 class Category(models.Model):
