@@ -128,8 +128,12 @@ class Review(models.Model):
     )
     score = models.IntegerField(
         default=0,
-        validators=[MinValueValidator(1, message='Value must be 1 or higher'),
-                    MaxValueValidator(10, message='Value must be above 10')])
+        validators=[MinValueValidator(
+                    1,
+                    message='Значение должно быть 1 или больше'),
+                    MaxValueValidator(
+                    10,
+                    message='Значение должно быть не больше 10')])
     pub_date = models.DateField(auto_now=True)
 
     class Meta:
