@@ -20,6 +20,13 @@ class IsAdmin(permissions.BasePermission):
             user.is_authenticated and user.role not in (USER, MODERATOR))
 
 
+class GetUpdateUserPermission(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        if 'role' not in request.data:
+            return True
+
+
 class ReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.method in SAFE_METHODS

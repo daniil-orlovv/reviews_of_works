@@ -19,10 +19,10 @@ router_v1.register(
     CommentViewSet, basename='comments')
 
 urlpatterns = [
-    path('v1/auth/signup/', SendCodeView.as_view(), basename='send_confcode'),
-    path('v1/auth/token/', SendTokenView.as_view(), basename='send_token'),
+    path('v1/auth/signup/', SendCodeView.as_view(), name='send_confcode'),
+    path('v1/auth/token/', SendTokenView.as_view(), name='send_token'),
     path('v1/users/me/', GetUpdateUserProfile.as_view({
-        'get': 'retrieve',
-        'patch': 'partial_update'}), basename='getupdate_user'),
+        'get': 'get_profile',
+        'patch': 'update_profile'}), name='getupdate_user'),
     path('v1/', include(router_v1.urls))
 ]

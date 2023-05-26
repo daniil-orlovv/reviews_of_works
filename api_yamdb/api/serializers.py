@@ -17,6 +17,18 @@ class UserSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(
         required=False, max_length=150)
 
+    def validate(self, data):
+        data = super().validate(data)
+        email = data.get('email')
+        username = data.get('username')
+        if (not User.objects.filter(email=email, username=username).exists()
+           and (User.objects.filter(email=email).exists())):
+            raise serializers.ValidationError('Эта почта занята!')
+        if (not User.objects.filter(email=email, username=username).exists()
+           and (User.objects.filter(username=username).exists())):
+            raise serializers.ValidationError('Этот username занят!')
+        return data
+
     def validate_username(self, value):
         if not re.match(r'^[\w.@+\-]*$', value):
             raise serializers.ValidationError(

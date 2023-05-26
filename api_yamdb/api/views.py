@@ -6,14 +6,15 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Avg
 from rest_framework import filters, permissions, status, viewsets
-from rest_framework.decorators import permission_classes
+from rest_framework.decorators import permission_classes, action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 
 from api.filters import GenreFilter
-from api.permissions import IsAdmin, IsUser, ReadOnly, AdminPermission
+from api.permissions import (IsAdmin, IsUser, ReadOnly, AdminPermission,
+                             GetUpdateUserPermission)
 from reviews.models import Category, Comment, Genre, Review, Title, User
 from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, ReviewSerializer,
@@ -96,48 +97,24 @@ class SendCodeView(APIView):
         email = serializer.validated_data.get('email')
         username = serializer.validated_data.get('username')
         confirmation_code = shortuuid.uuid()[:6]
-        if User.objects.filter(username=username, email=email).exists():
-            send_mail(
-                THEME_MAIL,
-                f'Ваш код подтверждения: {confirmation_code}',
-                FROM_MAIL,
-                [email],
-                fail_silently=False,
-            )
-            return Response(
-                {'username': username, 'email': email},
-                status=status.HTTP_200_OK
-            )
-        if User.objects.filter(username=username).exists():
-            return Response(
-                {'Этот username занят!'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        if User.objects.filter(email=email).exists():
-            return Response(
-                {'Этот email занят!'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        else:
-            with transaction.atomic():
-                user, user_created = User.objects.update_or_create(
-                    username=username,
-                    defaults={
-                        'username': username,
-                        'email': email,
-                        'confirmation_code': confirmation_code}
-                )
-                send_mail(
-                    THEME_MAIL,
-                    f'Ваш код подтверждения: {confirmation_code}',
-                    FROM_MAIL,
-                    [email],
-                    fail_silently=False,
-                )
-                return Response(
-                    {'username': username, 'email': email},
-                    status=status.HTTP_200_OK
-                )
+        user, user_created = User.objects.update_or_create(
+            username=username,
+            defaults={
+                'username': username,
+                'email': email,
+                'confirmation_code': confirmation_code}
+        )
+        send_mail(
+            THEME_MAIL,
+            f'Ваш код подтверждения: {confirmation_code}',
+            FROM_MAIL,
+            [email],
+            fail_silently=False,
+        )
+        return Response(
+            {'username': username, 'email': email},
+            status=status.HTTP_200_OK
+        )
 
 
 @permission_classes([permissions.AllowAny])
@@ -159,30 +136,45 @@ class SendTokenView(APIView):
         return Response({'token': str(token)}, status=status.HTTP_200_OK)
 
 
+# @api_view(['GET', 'PATCH'])
+# @permission_classes([permissions.IsAuthenticated])
+# def update_user(request):
+#     user = get_object_or_404(User, pk=request.user.id)
+#     if request.method == 'PATCH':
+#         if 'role' in request.data:
+#             return Response(
+#                 {'Вы не можете изменять поле role'},
+#                 status=status.HTTP_400_BAD_REQUEST)
+#         serializer = UserSerializer(user, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     user = User.objects.get(pk=request.user.id)
+#     serializer = UserSerializer(user, many=False)
+#     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class GetUpdateUserProfile(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [GetUpdateUserPermission, permissions.IsAuthenticated]
     http_method_names = ['get', 'patch', ]
 
-    def retrieve(self, request, *args, **kwargs):
+    @action(detail=True, methods=['get'])
+    def get_profile(self, request):
         username = request.user.username
         user = User.objects.get(username=username)
-        serializer = self.get_serializer(user)
-        return Response(serializer.data)
+        serializer = UserSerializer(user, partial=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def partial_update(self, request, *args, **kwargs):
-        if 'role' in request.data:
-            return Response(
-                {'Вы не можете изменять поле role'},
-                status=status.HTTP_400_BAD_REQUEST)
-        username = request.user
-        serializer = self.get_serializer(
-            username,
-            data=request.data,
-            partial=True)
+    @action(detail=False, methods=['patch'])
+    def update_profile(self, request):
+        user = request.user
+        serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class AdminCRUDUser(viewsets.ModelViewSet):
