@@ -13,9 +13,9 @@ class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True, max_length=254)
     first_name = serializers.CharField(
-        required=False)
+        required=False, max_length=150)
     last_name = serializers.CharField(
-        required=False)
+        required=False, max_length=150)
 
     def validate_username(self, value):
         if not re.match(r'^[\w.@+\-]*$', value):
@@ -24,18 +24,6 @@ class UserSerializer(serializers.ModelSerializer):
         if value.lower() == 'me':
             raise serializers.ValidationError(
                 'Поле username не может принимать значение "me"!')
-        return value
-
-    def validate_first_name(self, value):
-        if len(value) > 150:
-            raise serializers.ValidationError(
-                'Поле first_name не может быть более 150 символов!')
-        return value
-
-    def validate_last_name(self, value):
-        if len(value) > 150:
-            raise serializers.ValidationError(
-                'Поле last_name не может быть более 150 символов!')
         return value
 
     class Meta:
