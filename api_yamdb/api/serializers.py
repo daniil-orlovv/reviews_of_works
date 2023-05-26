@@ -37,49 +37,22 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
 
 
-class AdminCRUDSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
-        required=True, max_length=150)
-    email = serializers.EmailField(
-        required=True, max_length=254)
-    first_name = serializers.CharField(
-        required=False, max_length=150)
-    last_name = serializers.CharField(
-        required=False, max_length=150)
+class AdminCRUDSerializer(UserSerializer):
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError(
                 'Этот email занят!')
-        if not value:
-            raise serializers.ValidationError(
-                'Поле email не может быть пустым!')
         return value
 
     def validate_username(self, value):
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError(
                 'Этот username занят!')
-        if not value:
-            raise serializers.ValidationError(
-                'Поле username не может быть пустым!')
         if not re.match(r'^[\w.@+\-]*$', value):
             raise serializers.ValidationError(
                 'Используйте буквы, цифры и символы @/./+/-/_')
-        if value.lower() == 'me':
-            raise serializers.ValidationError(
-                'Поле username не может принимать значение "me"!')
         return value
-
-    class Meta:
-        fields = (
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'bio',
-            'role')
-        model = User
 
 
 class CategorySerializer(serializers.ModelSerializer):
