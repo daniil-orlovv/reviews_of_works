@@ -18,9 +18,6 @@ class UserSerializer(serializers.ModelSerializer):
         required=False)
 
     def validate_username(self, value):
-        if not value:
-            raise serializers.ValidationError(
-                'Поле username не может быть пустым!')
         if not re.match(r'^[\w.@+\-]*$', value):
             raise serializers.ValidationError(
                 'Используйте буквы, цифры и символы @/./+/-/_')
