@@ -21,11 +21,13 @@ class UserSerializer(serializers.ModelSerializer):
         data = super().validate(data)
         email = data.get('email')
         username = data.get('username')
-        if (not User.objects.filter(email=email, username=username).exists()
-           and (User.objects.filter(email=email).exists())):
+        user_full = User.objects.filter(
+            email=email, username=username).exists()
+        user_email = User.objects.filter(email=email).exists()
+        user_username = User.objects.filter(username=username).exists()
+        if not user_full and user_email:
             raise serializers.ValidationError('Эта почта занята!')
-        if (not User.objects.filter(email=email, username=username).exists()
-           and (User.objects.filter(username=username).exists())):
+        if not user_full and user_username:
             raise serializers.ValidationError('Этот username занят!')
         return data
 

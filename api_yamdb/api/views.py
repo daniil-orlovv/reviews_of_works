@@ -37,7 +37,6 @@ class GenreViewSet(CreateListDestroyViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
     ordering_fields = ('year', 'name')
     permission_classes = [IsAdmin | ReadOnly]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
@@ -49,7 +48,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitlePostSerializer
 
     def get_queryset(self):
-        return self.queryset.annotate(
+        return Title.objects.all().annotate(
             rating=Avg('reviews__score')
         )
 
@@ -144,7 +143,7 @@ class GetUpdateUserProfile(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def get_profile(self, request):
         username = request.user.username
-        user = User.objects.get(username=username)
+        user = get_object_or_404(User, username=username)
         serializer = UserSerializer(user, partial=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
