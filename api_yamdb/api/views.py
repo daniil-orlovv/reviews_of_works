@@ -13,13 +13,12 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from api.filters import GenreFilter
 from api.permissions import (IsAdmin, IsUser, ReadOnly, AdminPermission,
-                             GetUpdateUserPermission)
+                             MePermission)
 from reviews.models import Category, Comment, Genre, Review, Title, User
 from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, ReviewSerializer,
                              TitleGetSerializer, TitlePostSerializer,
-                             TokenRegSerializer, UserSerializer,
-                             AdminCRUDSerializer)
+                             TokenRegSerializer, UserSerializer)
 from api.mixins import CreateListDestroyViewSet
 from api_yamdb.settings import FROM_MAIL, THEME_MAIL
 
@@ -130,33 +129,33 @@ class SendTokenView(APIView):
         return Response({'token': str(token)}, status=status.HTTP_200_OK)
 
 
-class GetUpdateUserProfile(viewsets.ModelViewSet):
+class CRUDUser(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [GetUpdateUserPermission, permissions.IsAuthenticated]
-    http_method_names = ['get', 'patch', ]
-
-    @action(detail=True, methods=['get'])
-    def get_profile(self, request):
-        username = request.user.username
-        user = get_object_or_404(User, username=username)
-        serializer = UserSerializer(user, partial=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=['patch'])
-    def update_profile(self, request):
-        user = request.user
-        serializer = self.get_serializer(user, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class AdminCRUDUser(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = AdminCRUDSerializer
     permission_classes = [AdminPermission, permissions.IsAuthenticated]
     lookup_field = 'username'
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete', ]
+
+    @action(
+        detail=False,
+        methods=['get', 'patch'],
+        permission_classes=[MePermission, permissions.IsAuthenticated])
+    def me(self, request):
+        if request.method == 'PATCH':
+            user = User.objects.get(pk=request.user.id)
+            print(user)
+            serializer = UserSerializer(
+                user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST)
+        if request.method == 'GET':
+            username = request.user.username
+            user = get_object_or_404(User, username=username)
+            serializer = UserSerializer(user, partial=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
