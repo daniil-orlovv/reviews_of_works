@@ -13,9 +13,9 @@ class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True, max_length=254)
     first_name = serializers.CharField(
-        required=False, max_length=150)
+        required=False, allow_null=True, allow_blank=True, max_length=150)
     last_name = serializers.CharField(
-        required=False, max_length=150)
+        required=False, allow_null=True, allow_blank=True, max_length=150)
 
     def validate(self, data):
         data = super().validate(data)
@@ -49,24 +49,6 @@ class UserSerializer(serializers.ModelSerializer):
             'bio',
             'role')
         model = User
-
-
-class AdminCRUDSerializer(UserSerializer):
-
-    def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError(
-                'Этот email занят!')
-        return value
-
-    def validate_username(self, value):
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError(
-                'Этот username занят!')
-        if not re.match(r'^[\w.@+\-]*$', value):
-            raise serializers.ValidationError(
-                'Используйте буквы, цифры и символы @/./+/-/_')
-        return value
 
 
 class CategorySerializer(serializers.ModelSerializer):

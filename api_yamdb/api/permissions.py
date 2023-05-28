@@ -20,7 +20,7 @@ class IsAdmin(permissions.BasePermission):
             and not user.is_moderator)
 
 
-class GetUpdateUserPermission(permissions.BasePermission):
+class MePermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         if 'role' not in request.data:
