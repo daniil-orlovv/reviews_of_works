@@ -144,18 +144,11 @@ class CRUDUser(viewsets.ModelViewSet):
         permission_classes=[MePermission, permissions.IsAuthenticated])
     def me(self, request):
         if request.method == 'PATCH':
-            user = User.objects.get(pk=request.user.id)
-            print(user)
             serializer = UserSerializer(
-                user, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST)
-        if request.method == 'GET':
-            username = request.user.username
-            user = get_object_or_404(User, username=username)
-            serializer = UserSerializer(user, partial=True)
+                request.user, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
+        user = get_object_or_404(User, username=request.user.username)
+        serializer = UserSerializer(user, partial=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
