@@ -21,7 +21,7 @@
 Проект создан с целью обучения совместной работе, soft-скиллов и работе с Git, а также закреплению знаний об API, Django REST framework.
 
 ## Технологии
-`Django`, `Django REST Framework`, `Djoser`, `JWT`, `Sqlite`, `Git`, `GitHub`
+`Django`, `Django REST Framework`, `Djoser`, `JWT`, `Sqlite`, `Git`, `GitHub`, `sqlite3`
 
 # :rocket: Инструкция по развертыванию и запуску
 Клонировать репозиторий и перейти в него в командной строке:
